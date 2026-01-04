@@ -104,14 +104,22 @@ async function fetchVideoInfo(videoId) {
   }
 
   const snippet = data.items[0].snippet;
+  const thumbs = snippet.thumbnails || {};
+
+  const bestThumb =
+    thumbs.maxres?.url ||     // 1280x720
+    thumbs.standard?.url ||   // 640x480
+    thumbs.high?.url ||       // 480x360
+    thumbs.medium?.url ||     // 320x180
+    thumbs.default?.url;      // 120x90
+
   return {
     title: snippet.title,
     channel: snippet.channelTitle,
-    thumbnail:
-      (snippet.thumbnails && snippet.thumbnails.medium?.url) ||
-      snippet.thumbnails.default.url,
+    thumbnail: bestThumb,
   };
 }
+
 
 // ===== YouTube Iframe API 콜백 =====
 

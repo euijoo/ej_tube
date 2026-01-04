@@ -1,52 +1,61 @@
 // ===== Firebase SDK import & 초기화 =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-// 추후 Auth / Firestore 사용 시 아래 주석 해제해서 사용 가능
-// import { getAuth } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
-// import { getFirestore } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
+// Firebase 설정
 const firebaseConfig = {
   apiKey: "AIzaSyA-wThpRQqn1XaB8sIBO4J4Mq_kOQyTy04",
   authDomain: "ejtube-7a3b9.firebaseapp.com",
   projectId: "ejtube-7a3b9",
   storageBucket: "ejtube-7a3b9.firebasestorage.app",
   messagingSenderId: "1065039235604",
-  appId: "1:1065039235604:web:ebd9ca5f3653df841a7501"
+  appId: "1:1065039235604:web:ebd9ca5f3653df841a7501",
 };
 
 const app = initializeApp(firebaseConfig);
-// const auth = getAuth(app);
-// const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
 
 // ===== 설정 =====
 
-// 비밀번호 (나만 사용하는 용도라 간단하게)
-const PASSWORD = "1234";
-
 // YouTube Data API 키
-const API_KEY = "YOUR_API_KEY_HERE";
+const API_KEY = "YOUR_API_KEY_HERE"; // ← 여기만 네 키로 바꿔줘
 
-// localStorage 키
-const STORAGE_KEY = "ej_tube_tracks_v1";
+// Firestore 컬렉션 경로: users/{uid}/tracks
+let currentUser = null; // { uid, email, ... }
 
 // ===== 전역 상태 =====
 
 let player = null;
-let tracks = []; // { id, videoId, title, channel, thumbnail, addedAt }
+let tracks = []; // { id(문서ID), videoId, title, channel, thumbnail, addedAt }
 let currentTrackId = null;
 
 // ===== DOM 참조 =====
 
-const lockScreen = document.getElementById("lock-screen");
-const mainScreen = document.getElementById("main-screen");
-const passwordInput = document.getElementById("passwordInput");
-const unlockButton = document.getElementById("unlockButton");
-const lockError = document.getElementById("lockError");
+// 로그인 화면
+const loginScreen = document.getElementById("login-screen");
+const googleLoginButton = document.getElementById("googleLoginButton");
+const loginError = document.getElementById("loginError");
 
-// (index.html에 탭 요소가 없다면 이 부분은 나중에 탭 UI 추가 시 사용)
-const tabAdd = document.getElementById("tabAdd");
-const tabList = document.getElementById("tabList");
-const addView = document.getElementById("add-view");
-const listView = document.getElementById("list-view");
+// 메인 화면
+const mainScreen = document.getElementById("main-screen");
+const logoutButton = document.getElementById("logoutButton");
+const userEmailEl = document.getElementById("userEmail");
 
 const addButton = document.getElementById("addButton");
 const videoUrlInput = document.getElementById("videoUrl");
@@ -56,50 +65,6 @@ const trackListEl = document.getElementById("trackList");
 const titleEl = document.getElementById("title");
 const artistEl = document.getElementById("artist");
 const thumbnailEl = document.getElementById("thumbnail");
-
-// ===== 비밀번호 잠금 =====
-
-unlockButton.addEventListener("click", () => {
-  const value = passwordInput.value.trim();
-  if (value === PASSWORD) {
-    lockScreen.style.display = "none";
-    mainScreen.classList.remove("hidden");
-    // 잠금 해제 후, 저장된 리스트 로딩
-    loadTracksFromStorage();
-    renderTrackList();
-  } else {
-    lockError.textContent = "비밀번호가 올바르지 않습니다.";
-  }
-});
-
-passwordInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    unlockButton.click();
-  }
-});
-
-// ===== 탭 전환 (탭 요소 있을 때만 동작하도록 안전 처리) =====
-
-function showAddView() {
-  if (!tabAdd || !tabList || !addView || !listView) return;
-  tabAdd.classList.add("active");
-  tabList.classList.remove("active");
-  addView.classList.add("active-view");
-  listView.classList.remove("active-view");
-}
-
-function showListView() {
-  if (!tabAdd || !tabList || !addView || !listView) return;
-  tabAdd.classList.remove("active");
-  tabList.classList.add("active");
-  addView.classList.remove("active-view");
-  listView.classList.add("active-view");
-}
-
-if (tabAdd && tabList) {
-  tabAdd.addEventListener("click", showAddView);
-  tabList.addEventListener("click", showListView);
-}
 
 // ===== 유틸: videoId 추출 =====
 
@@ -126,7 +91,7 @@ async function fetchVideoInfo(videoId) {
   const params = new URLSearchParams({
     key: API_KEY,
     part: "snippet",
-    id: videoId
+    id: videoId,
   });
 
   const res = await fetch(`${endpoint}?${params.toString()}`);
@@ -143,39 +108,74 @@ async function fetchVideoInfo(videoId) {
     channel: snippet.channelTitle,
     thumbnail:
       (snippet.thumbnails && snippet.thumbnails.medium?.url) ||
-      snippet.thumbnails.default.url
+      snippet.thumbnails.default.url,
   };
 }
 
-// ===== Iframe API 콜백 =====
+// ===== YouTube Iframe API 콜백 =====
 
 function onYouTubeIframeAPIReady() {
   // 최초에는 아무것도 하지 않음
 }
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
-// ===== 트랙 저장/불러오기 =====
+// ===== Firestore: 유저별 tracks 컬렉션 참조 =====
 
-function loadTracksFromStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      tracks = [];
-      return;
-    }
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      tracks = parsed.sort((a, b) => b.addedAt - a.addedAt);
-    } else {
-      tracks = [];
-    }
-  } catch {
-    tracks = [];
-  }
+function getTracksCollectionRef(uid) {
+  return collection(db, "users", uid, "tracks");
 }
 
-function saveTracksToStorage() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+// Firestore에서 트랙 전체 불러오기
+async function loadTracksFromFirestore() {
+  if (!currentUser) return;
+
+  const colRef = getTracksCollectionRef(currentUser.uid);
+  const snap = await getDocs(colRef);
+  const list = [];
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+    list.push({
+      id: docSnap.id,
+      videoId: data.videoId,
+      title: data.title,
+      channel: data.channel,
+      thumbnail: data.thumbnail,
+      addedAt: data.addedAt,
+    });
+  });
+
+  // 최신순 정렬
+  tracks = list.sort((a, b) => b.addedAt - a.addedAt);
+}
+
+// Firestore에 새 트랙 추가
+async function addTrackToFirestore(track) {
+  if (!currentUser) return;
+
+  const colRef = getTracksCollectionRef(currentUser.uid);
+  const docRef = await addDoc(colRef, track);
+  return docRef.id;
+}
+
+// Firestore에서 특정 트랙 삭제
+async function deleteTrackFromFirestore(id) {
+  if (!currentUser) return;
+
+  const docRef = doc(db, "users", currentUser.uid, "tracks", id);
+  await deleteDoc(docRef);
+}
+
+// Firestore에서 전체 트랙 삭제 (clear all)
+async function clearTracksInFirestore() {
+  if (!currentUser) return;
+
+  const colRef = getTracksCollectionRef(currentUser.uid);
+  const snap = await getDocs(colRef);
+  const promises = [];
+  snap.forEach((docSnap) => {
+    promises.push(deleteDoc(doc(db, "users", currentUser.uid, "tracks", docSnap.id)));
+  });
+  await Promise.all(promises);
 }
 
 // ===== UI 렌더링 =====
@@ -224,7 +224,7 @@ function renderTrackList() {
     metaDiv.className = "track-item-meta";
     metaDiv.textContent = new Date(track.addedAt).toLocaleTimeString("ko-KR", {
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     });
 
     const delBtn = document.createElement("button");
@@ -242,9 +242,9 @@ function renderTrackList() {
       playTrack(track.id);
     });
 
-    delBtn.addEventListener("click", (e) => {
+    delBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      deleteTrack(track.id);
+      await deleteTrack(track.id);
     });
 
     trackListEl.appendChild(li);
@@ -255,11 +255,26 @@ function updateNowPlaying(track) {
   titleEl.textContent = track.title;
   artistEl.textContent = track.channel;
   thumbnailEl.src = track.thumbnail;
+
+  // 미니 플레이어도 같이 업데이트
+  const miniThumb = document.getElementById("miniThumb");
+  const miniTitle = document.getElementById("miniTitle");
+  const miniArtist = document.getElementById("miniArtist");
+  if (miniThumb && miniTitle && miniArtist) {
+    miniThumb.src = track.thumbnail;
+    miniTitle.textContent = track.title;
+    miniArtist.textContent = track.channel;
+  }
 }
 
 // ===== 트랙 추가/삭제/재생 =====
 
 async function addTrackFromUrl(url) {
+  if (!currentUser) {
+    alert("먼저 Google 계정으로 로그인해 주세요.");
+    return;
+  }
+
   const videoId = extractVideoId(url);
   if (!videoId) {
     alert("유효한 YouTube 주소가 아닌 것 같아요.");
@@ -269,34 +284,40 @@ async function addTrackFromUrl(url) {
   try {
     const info = await fetchVideoInfo(videoId);
 
-    const newTrack = {
-      id: `${videoId}_${Date.now()}`,
+    const newTrackData = {
       videoId,
       title: info.title,
       channel: info.channel,
       thumbnail: info.thumbnail,
-      addedAt: Date.now()
+      addedAt: Date.now(),
+    };
+
+    // Firestore에 먼저 저장
+    const docId = await addTrackToFirestore(newTrackData);
+
+    const newTrack = {
+      id: docId,
+      ...newTrackData,
     };
 
     tracks.unshift(newTrack);
-    saveTracksToStorage();
     currentTrackId = newTrack.id;
     updateNowPlaying(newTrack);
     renderTrackList();
     playVideoById(videoId);
-    showListView(); // 추가 후 리스트 화면으로 전환
   } catch (err) {
     console.error(err);
     alert("영상 정보를 불러오는 중 문제가 발생했어요.");
   }
 }
 
-function deleteTrack(id) {
+async function deleteTrack(id) {
+  await deleteTrackFromFirestore(id);
+
   const index = tracks.findIndex((t) => t.id === id);
   if (index === -1) return;
 
   tracks.splice(index, 1);
-  saveTracksToStorage();
 
   if (currentTrackId === id) {
     currentTrackId = tracks[0]?.id || null;
@@ -327,13 +348,72 @@ function playVideoById(videoId) {
       videoId,
       playerVars: {
         rel: 0,
-        playsinline: 1
-      }
+        playsinline: 1,
+      },
     });
   } else {
     player.loadVideoById(videoId);
   }
 }
+
+// ===== Google 로그인/로그아웃 =====
+
+googleLoginButton.addEventListener("click", async () => {
+  try {
+    loginError.textContent = "";
+    await signInWithPopup(auth, provider);
+    // onAuthStateChanged가 자동으로 호출됨
+  } catch (err) {
+    console.error(err);
+    loginError.textContent = "로그인 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.";
+  }
+});
+
+logoutButton.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    // onAuthStateChanged에서 화면 정리
+  } catch (err) {
+    console.error(err);
+    alert("로그아웃 중 문제가 발생했어요.");
+  }
+});
+
+// 로그인 상태 감시
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // 로그인됨
+    currentUser = user;
+    userEmailEl.textContent = user.email || "";
+
+    loginScreen.style.display = "none";
+    mainScreen.classList.remove("hidden");
+
+    // Firestore에서 트랙 불러오기
+    await loadTracksFromFirestore();
+    renderTrackList();
+
+    // 기존 트랙이 있으면 첫 곡으로 표시
+    if (tracks.length > 0) {
+      const first = tracks[0];
+      currentTrackId = first.id;
+      updateNowPlaying(first);
+    } else {
+      titleEl.textContent = "제목";
+      artistEl.textContent = "아티스트";
+      thumbnailEl.removeAttribute("src");
+    }
+  } else {
+    // 로그아웃됨
+    currentUser = null;
+    tracks = [];
+    currentTrackId = null;
+
+    loginScreen.style.display = "flex";
+    mainScreen.classList.add("hidden");
+    loginError.textContent = "";
+  }
+});
 
 // ===== 이벤트 바인딩 =====
 
@@ -350,11 +430,16 @@ videoUrlInput.addEventListener("keydown", (e) => {
   }
 });
 
-clearListButton.addEventListener("click", () => {
+clearListButton.addEventListener("click", async () => {
+  if (!currentUser) {
+    alert("먼저 Google 계정으로 로그인해 주세요.");
+    return;
+  }
   if (!confirm("정말 전체 리스트를 비울까요?")) return;
+
+  await clearTracksInFirestore();
   tracks = [];
   currentTrackId = null;
-  saveTracksToStorage();
   renderTrackList();
   titleEl.textContent = "제목";
   artistEl.textContent = "아티스트";

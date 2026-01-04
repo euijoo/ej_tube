@@ -469,3 +469,4 @@ miniPlayPauseBtn.addEventListener("click", () => {
   }
 });
 
+

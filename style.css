@@ -4,16 +4,33 @@
   box-sizing: border-box;
 }
 
+:root {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: radial-gradient(circle at top left, #2b5876, #1e3c72);
+  background: #111827;
   color: #f9fafb;
   min-height: 100vh;
 }
 
 .app {
   min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* iOS 기기 안에 들어가는 느낌의 쉘 */
+.phone-shell {
+  width: 100%;
+  max-width: 430px; /* iPhone 14 Pro Max 세로 기준 */
+  min-height: 100vh;
+  padding: 24px 16px 80px; /* 하단 미니플레이어 공간 */
+  background: #111827;
+  position: relative;
 }
 
 /* 공통 버튼 */
@@ -29,7 +46,7 @@ body {
 
 .btn.primary {
   background: #10b981;
-  color: #0b1120;
+  color: #020617;
 }
 
 .btn.primary:hover {
@@ -37,34 +54,26 @@ body {
   transform: translateY(-1px);
 }
 
-.btn.subtle {
-  background: transparent;
-  color: #e5e7eb;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-}
-
-.btn.subtle:hover {
-  background: rgba(15, 23, 42, 0.4);
-}
-
 /* 잠금 화면 */
 
 .lock-screen {
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 24px;
+  background: radial-gradient(circle at top, #1f2937, #020617);
 }
 
 .lock-card {
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.96);
   padding: 32px 28px;
-  border-radius: 16px;
-  max-width: 400px;
+  border-radius: 24px;
+  max-width: 360px;
   width: 100%;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.5);
 }
 
 .logo {
@@ -75,7 +84,7 @@ body {
 .lock-text {
   margin: 0 0 16px 0;
   font-size: 14px;
-  color: #cbd5f5;
+  color: #e5e7eb;
 }
 
 .lock-input {
@@ -83,7 +92,7 @@ body {
   padding: 10px 12px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.7);
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.9);
   color: #e5e7eb;
   margin-bottom: 12px;
 }
@@ -112,93 +121,90 @@ body {
 }
 
 .main-screen {
-  min-height: 100vh;
-  padding: 24px;
+  width: 100%;
 }
 
-.header {
+/* 상단 커버 */
+
+.cover-section {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.subtitle {
-  margin: 4px 0 0;
+.cover-large {
+  width: 100%;
+  border-radius: 24px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: #020617;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8);
+}
+
+.cover-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.track-title-lg {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.track-artist-lg {
+  margin: 0;
   font-size: 13px;
-  color: #cbd5f5;
+  color: #9ca3af;
 }
 
-.main-layout {
-  max-width: 1120px;
-  margin: 0 auto;
+/* 플레이리스트 섹션 */
+
+.playlist-section {
+  margin-top: 8px;
 }
 
-/* 탭 */
-
-.tabs {
+.playlist-header {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
 
-.tab {
-  border: none;
-  cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  background: transparent;
-  color: #e5e7eb;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.tab.active {
-  background: #10b981;
-  border-color: #10b981;
-  color: #0b1120;
-}
-
-/* 뷰 전환 */
-
-.view {
-  display: none;
-}
-
-.view.active-view {
-  display: block;
-}
-
-/* 추가 페이지 */
-
-.view-title {
-  margin: 0 0 8px;
+.playlist-title {
+  margin: 0;
   font-size: 18px;
 }
 
-.view-desc {
-  margin: 0 0 20px;
-  color: #cbd5f5;
-  font-size: 14px;
+.playlist-sub {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #9ca3af;
 }
+
+/* 입력 */
 
 .input-area {
   display: flex;
   gap: 8px;
+  margin-bottom: 14px;
 }
 
 .input-area.big input {
-  padding: 12px 14px;
+  padding: 11px 12px;
 }
 
 .input-area input {
   flex: 1;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.6);
   background: rgba(15, 23, 42, 0.9);
   color: #e5e7eb;
+  font-size: 13px;
 }
 
 .input-area input:focus {
@@ -206,115 +212,45 @@ body {
   border-color: #10b981;
 }
 
-/* 리스트 뷰 내부 2컬럼 */
-
-.layout-2col {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
-  gap: 20px;
-  align-items: flex-start;
-}
-
-/* 플레이어 영역 */
-
-.player-pane {
-  background: rgba(15, 23, 42, 0.85);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-}
-
-.now-playing {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.cover {
-  width: 96px;
-  height: 96px;
-  border-radius: 12px;
-  object-fit: cover;
-  background: #020617;
-}
-
-.track-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.track-title {
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.track-artist {
-  font-size: 13px;
-  color: #9ca3af;
-}
-
-.player-frame {
-  margin-top: 4px;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* 리스트 영역 */
-
-.list-pane {
-  background: rgba(15, 23, 42, 0.9);
-  border-radius: 16px;
-  padding: 18px 16px;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-}
-
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.list-header h2 {
-  margin: 0;
-  font-size: 16px;
-}
+/* 리스트 */
 
 .track-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .track-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 6px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: #111827;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(31, 41, 55, 0.9);
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.05s ease;
+  transition: background-color 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
 }
 
 .track-item:hover {
-  background: rgba(30, 64, 175, 0.55);
+  background: #1f2937;
   transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.8);
 }
 
 .track-item.active {
-  background: rgba(16, 185, 129, 0.25);
+  background: #111827;
+  border-color: #10b981;
 }
 
 .track-item-thumb {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   object-fit: cover;
   background: #020617;
 }
@@ -327,6 +263,7 @@ body {
 
 .track-item-title {
   font-size: 14px;
+  font-weight: 500;
 }
 
 .track-item-artist {
@@ -355,14 +292,103 @@ body {
   color: #fca5a5;
 }
 
-/* 반응형 */
+.clear-all {
+  margin-top: 10px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 12px;
+  padding: 0;
+  cursor: pointer;
+}
 
-@media (max-width: 900px) {
-  .layout-2col {
-    grid-template-columns: 1fr;
+/* YouTube 플레이어 컨테이너 */
+
+.player-container {
+  margin-top: 16px;
+}
+
+.player-frame {
+  border-radius: 20px;
+  overflow: hidden;
+  background: #020617;
+}
+
+/* 하단 미니 플레이어 */
+
+.mini-player {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 18px 26px;
+  background: radial-gradient(circle at top, #111827, #020617);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 430px;
+  margin: 0 auto;
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.9);
+}
+
+.mini-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mini-cover {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #020617;
+}
+
+.mini-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mini-title {
+  font-size: 13px;
+}
+
+.mini-artist {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.mini-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: #1f2937;
+  color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* 반응형: 작은 화면에서도 꽉 차게 */
+
+@media (max-width: 480px) {
+  .phone-shell {
+    padding: 18px 12px 80px;
   }
 
-  .list-pane {
-    max-height: none;
+  .mini-player {
+    padding-inline: 14px;
   }
 }

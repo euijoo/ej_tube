@@ -9,24 +9,19 @@
 <body>
   <div class="app">
 
-    <!-- 잠금 화면 -->
-    <div id="lock-screen" class="lock-screen">
+    <!-- 로그인 화면 -->
+    <div id="login-screen" class="lock-screen">
       <div class="lock-card">
         <h1 class="logo">ej_tube</h1>
-        <p class="lock-text">나만의 YouTube 플레이어에 입장하려면 비밀번호를 입력하세요.</p>
-        <input
-          type="password"
-          id="passwordInput"
-          class="lock-input"
-          placeholder="비밀번호"
-        />
-        <button id="unlockButton" class="btn primary">입장</button>
-        <p class="hint">※ 비밀번호는 script.js의 PASSWORD에서 바꿀 수 있어요.</p>
-        <p id="lockError" class="error-text"></p>
+        <p class="lock-text">Google 계정으로 로그인해서 나만의 YouTube 플레이리스트를 관리하세요.</p>
+        <button id="googleLoginButton" class="btn primary">
+          Google로 로그인
+        </button>
+        <p id="loginError" class="error-text"></p>
       </div>
     </div>
 
-    <!-- 메인 화면 -->
+    <!-- 메인 화면 (로그인 후에만 표시) -->
     <div id="main-screen" class="main-screen hidden">
       <main class="phone-shell">
         <!-- 상단 커버 & 정보 -->
@@ -35,6 +30,7 @@
           <div class="cover-text">
             <h2 id="title" class="track-title-lg">제목</h2>
             <p id="artist" class="track-artist-lg">아티스트</p>
+            <p id="userEmail" class="user-email"></p>
           </div>
         </section>
 
@@ -45,6 +41,7 @@
               <h3 class="playlist-title">Playlist</h3>
               <p class="playlist-sub">내가 추가한 YouTube / YouTube Music</p>
             </div>
+            <button id="logoutButton" class="btn secondary">로그아웃</button>
           </div>
 
           <!-- URL 추가 -->
@@ -62,12 +59,12 @@
           <button id="clearListButton" class="clear-all">전체 비우기</button>
         </section>
 
-        <!-- YouTube iframe 플레이어 (화면 안쪽에 숨김, 높이는 카드 높이 정도) -->
+        <!-- YouTube iframe 플레이어 -->
         <div class="player-container">
           <div id="player" class="player-frame"></div>
         </div>
 
-        <!-- 하단 미니 플레이어 -->
+        <!-- 하단 미니 플레이어 (UI만, 기능은 나중에 확장 가능) -->
         <footer class="mini-player">
           <div class="mini-left">
             <img id="miniThumb" class="mini-cover" alt="mini cover" />
@@ -85,8 +82,7 @@
     </div>
   </div>
 
-    <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
   <script type="module" src="script.js"></script>
 </body>
 </html>
-

@@ -2,33 +2,75 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>euitube</title>
+  <title>ej_tube</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>euitube</h1>
+  <div class="app">
 
-  <!-- URL 입력 -->
-  <div class="input-area">
-    <input
-      type="text"
-      id="videoUrl"
-      placeholder="YouTube 또는 YouTube Music 주소를 붙여넣기"
-    />
-    <button id="loadButton">불러오기</button>
-  </div>
+    <!-- 로그인(비밀번호) 화면 -->
+    <div id="lock-screen" class="lock-screen">
+      <div class="lock-card">
+        <h1 class="logo">ej_tube</h1>
+        <p class="lock-text">나만의 플레이어에 입장하려면 비밀번호를 입력하세요.</p>
+        <input
+          type="password"
+          id="passwordInput"
+          class="lock-input"
+          placeholder="비밀번호"
+        />
+        <button id="unlockButton" class="btn primary">입장</button>
+        <p class="hint">※ 연습용이니까, 비밀번호는 코드 안에서 바꿀 수 있어요.</p>
+        <p id="lockError" class="error-text"></p>
+      </div>
+    </div>
 
-  <!-- 곡 정보 표시 영역 -->
-  <div class="info-area">
-    <img id="thumbnail" alt="thumbnail" />
-    <div>
-      <div id="title">제목</div>
-      <div id="artist">아티스트</div>
+    <!-- 메인 앱 화면 -->
+    <div id="main-screen" class="main-screen hidden">
+      <header class="header">
+        <div>
+          <h1 class="logo">ej_tube</h1>
+          <p class="subtitle">내가 고른 YouTube / YouTube Music 플레이어</p>
+        </div>
+      </header>
+
+      <main class="layout">
+        <!-- 왼쪽: 플레이어 영역 -->
+        <section class="player-pane">
+          <!-- 현재 곡 정보 -->
+          <div class="now-playing">
+            <img id="thumbnail" class="cover" alt="thumbnail" />
+            <div class="track-meta">
+              <div id="title" class="track-title">제목</div>
+              <div id="artist" class="track-artist">아티스트</div>
+            </div>
+          </div>
+
+          <!-- YouTube 플레이어 -->
+          <div id="player" class="player-frame"></div>
+
+          <!-- URL 추가 폼 -->
+          <div class="input-area">
+            <input
+              type="text"
+              id="videoUrl"
+              placeholder="YouTube 또는 YouTube Music 주소를 붙여넣기"
+            />
+            <button id="addButton" class="btn primary">추가</button>
+          </div>
+        </section>
+
+        <!-- 오른쪽: 최근 추가 리스트 -->
+        <section class="list-pane">
+          <div class="list-header">
+            <h2>내 리스트</h2>
+            <button id="clearListButton" class="btn subtle">전체 비우기</button>
+          </div>
+          <ul id="trackList" class="track-list"></ul>
+        </section>
+      </main>
     </div>
   </div>
-
-  <!-- 플레이어가 들어갈 영역 -->
-  <div id="player"></div>
 
   <!-- YouTube Iframe API -->
   <script src="https://www.youtube.com/iframe_api"></script>

@@ -1,3 +1,22 @@
+// ===== Firebase SDK import & 초기화 =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+// 추후 Auth / Firestore 사용 시 아래 주석 해제해서 사용 가능
+// import { getAuth } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+// import { getFirestore } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA-wThpRQqn1XaB8sIBO4J4Mq_kOQyTy04",
+  authDomain: "ejtube-7a3b9.firebaseapp.com",
+  projectId: "ejtube-7a3b9",
+  storageBucket: "ejtube-7a3b9.firebasestorage.app",
+  messagingSenderId: "1065039235604",
+  appId: "1:1065039235604:web:ebd9ca5f3653df841a7501"
+};
+
+const app = initializeApp(firebaseConfig);
+// const auth = getAuth(app);
+// const db = getFirestore(app);
+
 // ===== 설정 =====
 
 // 비밀번호 (나만 사용하는 용도라 간단하게)
@@ -23,6 +42,7 @@ const passwordInput = document.getElementById("passwordInput");
 const unlockButton = document.getElementById("unlockButton");
 const lockError = document.getElementById("lockError");
 
+// (index.html에 탭 요소가 없다면 이 부분은 나중에 탭 UI 추가 시 사용)
 const tabAdd = document.getElementById("tabAdd");
 const tabList = document.getElementById("tabList");
 const addView = document.getElementById("add-view");
@@ -58,9 +78,10 @@ passwordInput.addEventListener("keydown", (e) => {
   }
 });
 
-// ===== 탭 전환 =====
+// ===== 탭 전환 (탭 요소 있을 때만 동작하도록 안전 처리) =====
 
 function showAddView() {
+  if (!tabAdd || !tabList || !addView || !listView) return;
   tabAdd.classList.add("active");
   tabList.classList.remove("active");
   addView.classList.add("active-view");
@@ -68,14 +89,17 @@ function showAddView() {
 }
 
 function showListView() {
+  if (!tabAdd || !tabList || !addView || !listView) return;
   tabAdd.classList.remove("active");
   tabList.classList.add("active");
   addView.classList.remove("active-view");
   listView.classList.add("active-view");
 }
 
-tabAdd.addEventListener("click", showAddView);
-tabList.addEventListener("click", showListView);
+if (tabAdd && tabList) {
+  tabAdd.addEventListener("click", showAddView);
+  tabList.addEventListener("click", showListView);
+}
 
 // ===== 유틸: videoId 추출 =====
 

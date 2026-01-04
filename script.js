@@ -456,13 +456,16 @@ clearListButton.addEventListener("click", async () => {
 });
 
 miniPlayPauseBtn.addEventListener("click", () => {
-  if (!player) return; // 아직 플레이어가 없으면 무시
+  if (!player) return;
 
-  const state = player.getPlayerState(); // -1,0,1,2,... [web:751]
+  const state = player.getPlayerState();
 
   if (state === YT.PlayerState.PLAYING) {
     player.pauseVideo();
+    miniPlayPauseBtn.textContent = "▶";
   } else {
     player.playVideo();
+    miniPlayPauseBtn.textContent = "⏸";
   }
 });
+

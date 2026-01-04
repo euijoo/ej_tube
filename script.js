@@ -486,6 +486,6 @@ miniPlayPauseBtn.addEventListener("click", () => {
     miniPlayPauseBtn.textContent = "▶";
   } else {
     player.playVideo();
-    miniPlayPauseBtn.textContent = "Ⅱ";    // 또는 "Ⅱ", "PAUSE" 등
+    miniPlayPauseBtn.textContent = "⏸";
   }
 });

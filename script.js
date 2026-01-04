@@ -4,7 +4,7 @@
 const PASSWORD = "1234";
 
 // YouTube Data API 키
-const API_KEY = "YOUR_API_KEY_HERE";
+const API_KEY = "AIzaSyBysIkRsY2eIwHAqv2oSA8uh6XLiBvXtQ4";
 
 // localStorage 키
 const STORAGE_KEY = "ej_tube_tracks_v1";

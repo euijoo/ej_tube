@@ -1,23 +1,69 @@
-// 👉 여기 API 키 넣기
-const API_KEY = "AIzaSyBysIkRsY2eIwHAqv2oSA8uh6XLiBvXtQ4";
-let player = null;
+// ===== 설정 =====
 
-// URL에서 videoId 추출
+// 비밀번호 (나만 사용하는 용도라 간단하게)
+const PASSWORD = "1234";
+
+// YouTube Data API 키
+const API_KEY = "YOUR_API_KEY_HERE";
+
+// localStorage 키
+const STORAGE_KEY = "ej_tube_tracks_v1";
+
+// ===== 전역 상태 =====
+
+let player = null;
+let tracks = []; // { id, videoId, title, channel, thumbnail, addedAt }
+let currentTrackId = null;
+
+// ===== DOM 참조 =====
+
+const lockScreen = document.getElementById("lock-screen");
+const mainScreen = document.getElementById("main-screen");
+const passwordInput = document.getElementById("passwordInput");
+const unlockButton = document.getElementById("unlockButton");
+const lockError = document.getElementById("lockError");
+
+const addButton = document.getElementById("addButton");
+const videoUrlInput = document.getElementById("videoUrl");
+const clearListButton = document.getElementById("clearListButton");
+const trackListEl = document.getElementById("trackList");
+
+const titleEl = document.getElementById("title");
+const artistEl = document.getElementById("artist");
+const thumbnailEl = document.getElementById("thumbnail");
+
+// ===== 비밀번호 잠금 =====
+
+unlockButton.addEventListener("click", () => {
+  const value = passwordInput.value.trim();
+  if (value === PASSWORD) {
+    lockScreen.style.display = "none";
+    mainScreen.classList.remove("hidden");
+    // 잠금 해제 후, 저장된 리스트 로딩
+    loadTracksFromStorage();
+    renderTrackList();
+  } else {
+    lockError.textContent = "비밀번호가 올바르지 않습니다.";
+  }
+});
+
+passwordInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    unlockButton.click();
+  }
+});
+
+// ===== 유틸: videoId 추출 =====
+
 function extractVideoId(url) {
   try {
     const u = new URL(url);
-
-    // youtu.be 단축 주소
     if (u.hostname.includes("youtu.be")) {
       return u.pathname.slice(1);
     }
-
-    // youtube.com/watch?v=VIDEO_ID
     if (u.searchParams.get("v")) {
       return u.searchParams.get("v");
     }
-
-    // /embed/VIDEO_ID, /shorts/VIDEO_ID 등
     const paths = u.pathname.split("/");
     return paths.pop() || paths.pop();
   } catch (e) {
@@ -25,7 +71,8 @@ function extractVideoId(url) {
   }
 }
 
-// YouTube Data API로 영상 정보 가져오기
+// ===== Data API: 영상 정보 가져오기 =====
+
 async function fetchVideoInfo(videoId) {
   const endpoint = "https://www.googleapis.com/youtube/v3/videos";
   const params = new URLSearchParams({
@@ -47,49 +94,225 @@ async function fetchVideoInfo(videoId) {
     title: snippet.title,
     channel: snippet.channelTitle,
     thumbnail:
-      (snippet.thumbnails && snippet.thumbnails.high?.url) ||
+      (snippet.thumbnails && snippet.thumbnails.medium?.url) ||
       snippet.thumbnails.default.url
   };
 }
 
-// YouTube Iframe API 준비 콜백 (이름 고정)
+// ===== Iframe API 콜백 =====
+
 function onYouTubeIframeAPIReady() {
-  // 지금은 URL 입력 후에만 플레이어를 만들 거라 비워둠
+  // 최초에는 아무것도 하지 않음
+}
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+// ===== 트랙 저장/불러오기 =====
+
+function loadTracksFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      tracks = [];
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // addedAt 기준 내림차순 정렬 (최근 추가 먼저)
+      tracks = parsed.sort((a, b) => b.addedAt - a.addedAt);
+    } else {
+      tracks = [];
+    }
+  } catch {
+    tracks = [];
+  }
 }
 
-// 버튼 클릭 시 실행
-document.getElementById("loadButton").addEventListener("click", async () => {
-  const url = document.getElementById("videoUrl").value.trim();
-  const videoId = extractVideoId(url);
+function saveTracksToStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+}
 
+// ===== UI 렌더링 =====
+
+function renderTrackList() {
+  trackListEl.innerHTML = "";
+
+  if (tracks.length === 0) {
+    const empty = document.createElement("li");
+    empty.textContent = "아직 추가된 영상이 없습니다.";
+    empty.style.fontSize = "13px";
+    empty.style.color = "#9ca3af";
+    trackListEl.appendChild(empty);
+    return;
+  }
+
+  tracks.forEach((track) => {
+    const li = document.createElement("li");
+    li.className = "track-item";
+    li.dataset.trackId = track.id;
+
+    if (track.id === currentTrackId) {
+      li.classList.add("active");
+    }
+
+    const img = document.createElement("img");
+    img.className = "track-item-thumb";
+    img.src = track.thumbnail;
+    img.alt = track.title;
+
+    const textBox = document.createElement("div");
+    textBox.className = "track-item-text";
+
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "track-item-title";
+    titleDiv.textContent = track.title;
+
+    const artistDiv = document.createElement("div");
+    artistDiv.className = "track-item-artist";
+    artistDiv.textContent = track.channel;
+
+    textBox.appendChild(titleDiv);
+    textBox.appendChild(artistDiv);
+
+    const metaDiv = document.createElement("div");
+    metaDiv.className = "track-item-meta";
+    metaDiv.textContent = new Date(track.addedAt).toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "delete-btn";
+    delBtn.textContent = "삭제";
+
+    metaDiv.appendChild(delBtn);
+
+    li.appendChild(img);
+    li.appendChild(textBox);
+    li.appendChild(metaDiv);
+
+    // 클릭 시 재생
+    li.addEventListener("click", (e) => {
+      // 삭제 버튼 눌렀을 때는 재생 막기
+      if (e.target === delBtn) return;
+      playTrack(track.id);
+    });
+
+    // 삭제 버튼
+    delBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteTrack(track.id);
+    });
+
+    trackListEl.appendChild(li);
+  });
+}
+
+function updateNowPlaying(track) {
+  titleEl.textContent = track.title;
+  artistEl.textContent = track.channel;
+  thumbnailEl.src = track.thumbnail;
+}
+
+// ===== 트랙 추가/삭제/재생 =====
+
+async function addTrackFromUrl(url) {
+  const videoId = extractVideoId(url);
   if (!videoId) {
-    alert("유효한 YouTube 주소가 아닌 것 같아요 😢");
+    alert("유효한 YouTube 주소가 아닌 것 같아요.");
     return;
   }
 
   try {
-    // 1) Data API로 메타데이터 가져오기
     const info = await fetchVideoInfo(videoId);
-    document.getElementById("title").textContent = info.title;
-    document.getElementById("artist").textContent = info.channel;
-    document.getElementById("thumbnail").src = info.thumbnail;
 
-    // 2) 플레이어 생성 또는 변경
-    if (!player) {
-      player = new YT.Player("player", {
-        width: "640",
-        height: "360",
-        videoId: videoId,
-        playerVars: {
-          rel: 0,
-          playsinline: 1
-        }
-      });
-    } else {
-      player.loadVideoById(videoId);
-    }
+    const newTrack = {
+      id: `${videoId}_${Date.now()}`,
+      videoId,
+      title: info.title,
+      channel: info.channel,
+      thumbnail: info.thumbnail,
+      addedAt: Date.now()
+    };
+
+    // 최근 추가가 위로 오도록 앞에 추가
+    tracks.unshift(newTrack);
+    saveTracksToStorage();
+    currentTrackId = newTrack.id;
+    updateNowPlaying(newTrack);
+    renderTrackList();
+    playVideoById(videoId);
   } catch (err) {
     console.error(err);
     alert("영상 정보를 불러오는 중 문제가 발생했어요.");
   }
+}
+
+function deleteTrack(id) {
+  const index = tracks.findIndex((t) => t.id === id);
+  if (index === -1) return;
+
+  tracks.splice(index, 1);
+  saveTracksToStorage();
+
+  if (currentTrackId === id) {
+    currentTrackId = tracks[0]?.id || null;
+    if (currentTrackId) {
+      updateNowPlaying(tracks[0]);
+      playVideoById(tracks[0].videoId);
+    }
+  }
+
+  renderTrackList();
+}
+
+function playTrack(id) {
+  const track = tracks.find((t) => t.id === id);
+  if (!track) return;
+
+  currentTrackId = id;
+  updateNowPlaying(track);
+  playVideoById(track.videoId);
+  renderTrackList();
+}
+
+function playVideoById(videoId) {
+  if (!player) {
+    player = new YT.Player("player", {
+      width: "640",
+      height: "360",
+      videoId,
+      playerVars: {
+        rel: 0,
+        playsinline: 1
+      }
+    });
+  } else {
+    player.loadVideoById(videoId);
+  }
+}
+
+// ===== 이벤트 바인딩 =====
+
+addButton.addEventListener("click", () => {
+  const url = videoUrlInput.value.trim();
+  if (!url) return;
+  addTrackFromUrl(url);
+  videoUrlInput.value = "";
+});
+
+videoUrlInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    addButton.click();
+  }
+});
+
+clearListButton.addEventListener("click", () => {
+  if (!confirm("정말 전체 리스트를 비울까요?")) return;
+  tracks = [];
+  currentTrackId = null;
+  saveTracksToStorage();
+  renderTrackList();
+  titleEl.textContent = "제목";
+  artistEl.textContent = "아티스트";
+  thumbnailEl.removeAttribute("src");
 });

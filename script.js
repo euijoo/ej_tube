@@ -34,7 +34,7 @@ const db = getFirestore(app);
 // ===== 설정 =====
 
 // YouTube Data API 키
-const API_KEY = "AIzaSyBysIkRsY2eIwHAqv2oSA8uh6XLiBvXtQ4"; // ← 여기만 네 키로 바꿔줘
+const API_KEY = "AIzaSyBysIkRsY2eIwHAqv2oSA8uh6XLiBvXtQ4"; // ← 필요하면 네 키로 변경
 
 // Firestore 컬렉션 경로: users/{uid}/tracks
 let currentUser = null; // { uid, email, ... }
@@ -107,11 +107,11 @@ async function fetchVideoInfo(videoId) {
   const thumbs = snippet.thumbnails || {};
 
   const bestThumb =
-    thumbs.maxres?.url ||     // 1280x720
-    thumbs.standard?.url ||   // 640x480
-    thumbs.high?.url ||       // 480x360
-    thumbs.medium?.url ||     // 320x180
-    thumbs.default?.url;      // 120x90
+    thumbs.maxres?.url || // 1280x720
+    thumbs.standard?.url || // 640x480
+    thumbs.high?.url || // 480x360
+    thumbs.medium?.url || // 320x180
+    thumbs.default?.url; // 120x90
 
   return {
     title: snippet.title,
@@ -120,13 +120,22 @@ async function fetchVideoInfo(videoId) {
   };
 }
 
-
 // ===== YouTube Iframe API 콜백 =====
 
 function onYouTubeIframeAPIReady() {
-  // 최초에는 아무것도 하지 않음
+  // 최초에는 아무것도 하지 않음 (playVideoById에서 player 생성)
 }
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+// 플레이어 준비됐을 때: 미니 버튼 아이콘 초기화
+function onPlayerReady() {
+  miniPlayPauseBtn.textContent = "▶";
+}
+
+// (필요하면 상태변화 콜백도 나중에 추가 가능)
+// function onPlayerStateChange(event) {
+//   // event.data === YT.PlayerState.PLAYING 등으로 상태 확인
+// }
 
 // ===== Firestore: 유저별 tracks 컬렉션 참조 =====
 
@@ -182,7 +191,9 @@ async function clearTracksInFirestore() {
   const snap = await getDocs(colRef);
   const promises = [];
   snap.forEach((docSnap) => {
-    promises.push(deleteDoc(doc(db, "users", currentUser.uid, "tracks", docSnap.id)));
+    promises.push(
+      deleteDoc(doc(db, "users", currentUser.uid, "tracks", docSnap.id))
+    );
   });
   await Promise.all(promises);
 }
@@ -231,10 +242,13 @@ function renderTrackList() {
 
     const metaDiv = document.createElement("div");
     metaDiv.className = "track-item-meta";
-    metaDiv.textContent = new Date(track.addedAt).toLocaleTimeString("ko-KR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    metaDiv.textContent = new Date(track.addedAt).toLocaleTimeString(
+      "ko-KR",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
 
     const delBtn = document.createElement("button");
     delBtn.className = "delete-btn";
@@ -359,6 +373,10 @@ function playVideoById(videoId) {
         rel: 0,
         playsinline: 1,
       },
+      events: {
+        onReady: onPlayerReady,
+        // onStateChange: onPlayerStateChange, // 필요 시 사용
+      },
     });
   } else {
     player.loadVideoById(videoId);
@@ -374,7 +392,8 @@ googleLoginButton.addEventListener("click", async () => {
     // onAuthStateChanged가 자동으로 호출됨
   } catch (err) {
     console.error(err);
-    loginError.textContent = "로그인 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.";
+    loginError.textContent =
+      "로그인 중 문제가 발생했어요. 잠시 후 다시 시도해 주세요.";
   }
 });
 
@@ -455,6 +474,8 @@ clearListButton.addEventListener("click", async () => {
   thumbnailEl.removeAttribute("src");
 });
 
+// ===== 미니 플레이어 재생/일시정지 버튼 =====
+
 miniPlayPauseBtn.addEventListener("click", () => {
   if (!player) return;
 
@@ -468,5 +489,3 @@ miniPlayPauseBtn.addEventListener("click", () => {
     miniPlayPauseBtn.textContent = "⏸";
   }
 });
-
-

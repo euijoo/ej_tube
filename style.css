@@ -17,6 +17,72 @@ body {
   background: #020617;
 }
 
+/* ======================= */
+/* 상단 커버(썸네일) 부분  */
+/* ======================= */
+
+/* 상단 커버 섹션: 썸네일 + 텍스트를 한 줄로 */
+.cover-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #111827;
+}
+
+/* 최상단 썸네일 이미지 크기 통제 */
+.cover-large {
+  /* 기본 가로 크기: 화면 폭의 35% 정도 */
+  width: 35vw;
+  /* 하지만 너무 커지지 않도록 최대값 제한 (예: 140px) */
+  max-width: 140px;
+  /* 세로는 가로에 맞추되, 최대 높이도 제한 */
+  height: auto;
+  max-height: 140px;
+
+  border-radius: 12px;
+  object-fit: cover;
+  background: #111827;
+  display: block;
+}
+
+/* 오른쪽 텍스트 영역 */
+.cover-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.track-title-lg {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-artist-lg {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: 11px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ================================== */
+/* 이하: 기존에 쓰던 리스트 / 미니플레이어 */
+/* ================================== */
+
 /* 미니 플레이어 */
 .mini-player {
   position: fixed;
@@ -41,7 +107,7 @@ body {
   min-width: 0;
 }
 
-/* 커버 이미지 */
+/* 커버 이미지 (미니 플레이어) */
 .mini-cover {
   width: 40px;
   height: 40px;
@@ -172,7 +238,7 @@ body {
   background: #b91c1c;
 }
 
-/* 유튜브 iframe을 숨기되, 재생은 유지하기 위한 설정 */
+/* 유튜브 iframe을 완전히 숨기기 (오디오만 사용) */
 .player-container {
   display: none !important;
 }
@@ -182,34 +248,4 @@ body {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
-}
-
-/* ============================= */
-/* 여기부터: 최상단 썸네일 영역  */
-/* ============================= */
-
-/* 상단 커버 전체 영역 레이아웃 */
-.cover-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid #111827;
-}
-
-/* 최상단 썸네일 이미지 크기 통일 */
-.cover-large {
-  width: 120px;   /* 여기 숫자만 바꾸면 전체 커버 크기 변경 */
-  height: 120px;
-  border-radius: 12px;
-  object-fit: cover;
-  background: #111827;
-}
-
-/* 상단 텍스트 영역(제목, 아티스트, 이메일) */
-.cover-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
 }

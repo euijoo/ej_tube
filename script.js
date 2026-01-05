@@ -132,10 +132,31 @@ function onPlayerReady() {
   miniPlayPauseBtn.textContent = "▶";
 }
 
-// (필요하면 상태변화 콜백도 나중에 추가 가능)
-// function onPlayerStateChange(event) {
-//   // event.data === YT.PlayerState.PLAYING 등으로 상태 확인
-// }
+// 재생 상태 변경될 때(재생 시작, 일시정지, 끝남 등)
+function onPlayerStateChange(event) {
+  // 곡이 끝났을 때
+  if (event.data === YT.PlayerState.ENDED) {
+    if (!currentTrackId || tracks.length === 0) return;
+
+    const currentIndex = tracks.findIndex((t) => t.id === currentTrackId);
+    if (currentIndex === -1) return;
+
+    const nextIndex = currentIndex + 1;
+
+    // 마지막 곡이면 그냥 멈춤
+    if (nextIndex >= tracks.length) {
+      return;
+
+      // 만약 마지막 곡 뒤에 첫 곡으로 돌아가고 싶으면 위 return 지우고 아래 사용:
+      // const firstTrack = tracks[0];
+      // playTrack(firstTrack.id);
+      // return;
+    }
+
+    const nextTrack = tracks[nextIndex];
+    playTrack(nextTrack.id);
+  }
+}
 
 // ===== Firestore: 유저별 tracks 컬렉션 참조 =====
 
@@ -375,7 +396,7 @@ function playVideoById(videoId) {
       },
       events: {
         onReady: onPlayerReady,
-        // onStateChange: onPlayerStateChange, // 필요 시 사용
+        onStateChange: onPlayerStateChange, // ← 자동 다음 곡 재생용
       },
     });
   } else {
@@ -482,10 +503,10 @@ miniPlayPauseBtn.addEventListener("click", () => {
   const state = player.getPlayerState();
 
   if (state === YT.PlayerState.PLAYING) {
-  player.pauseVideo();
-  miniPlayPauseBtn.textContent = "▶";
-} else {
-  player.playVideo();
-  miniPlayPauseBtn.textContent = "⏸";
-}
+    player.pauseVideo();
+    miniPlayPauseBtn.textContent = "▶";
+  } else {
+    player.playVideo();
+    miniPlayPauseBtn.textContent = "⏸";
+  }
 });

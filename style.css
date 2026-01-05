@@ -1,8 +1,15 @@
-/* 트랙 아이템 기본 레이아웃 */
+/* 트랙 리스트 기본 */
+#trackList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 각 아이템 */
 .track-item {
   position: relative;
   overflow: hidden;
-  background: #111827;
+  background: #020617; /* 전체 배경색에 맞게 조정 가능 */
 }
 
 /* 스와이프되는 안쪽 내용 */
@@ -14,9 +21,14 @@
   transition: transform 0.2s ease;
 }
 
-/* 삭제 버튼이 열렸을 때 내용 왼쪽으로 이동 */
+/* 현재 재생 중인 아이템 강조 */
+.track-item.active .track-item-inner {
+  background: #111827;
+}
+
+/* 왼쪽으로 스와이프 되었을 때, 내용 영역을 왼쪽으로 밀기 */
 .track-item.swiped .track-item-inner {
-  transform: translateX(-80px); /* 버튼 너비만큼 */
+  transform: translateX(-80px); /* 삭제 버튼 너비만큼 */
 }
 
 /* 썸네일 */
@@ -32,6 +44,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 
 /* 제목/아티스트 */
@@ -39,16 +52,17 @@
   font-size: 14px;
   color: #e5e7eb;
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .track-item-artist {
   font-size: 12px;
   color: #9ca3af;
-}
-
-/* 현재 재생 중인 아이템 강조 */
-.track-item.active .track-item-inner {
-  background: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 오른쪽 삭제 버튼 영역 */
@@ -64,11 +78,12 @@
   color: #f9fafb;
   font-size: 13px;
   cursor: pointer;
-}
-
-/* 모바일에서 버튼 텍스트 중앙 정렬 */
-.track-item-delete {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* 모바일 터치에서 탭 영역 확대 느낌 */
+.track-item-delete:active {
+  background: #b91c1c;
 }

@@ -187,3 +187,17 @@ body {
 /* 트랙 리스트 */
 #trackList {
   list-s
+
+
+  /* 최상단 썸네일 강제 크기 고정 */
+#thumbnail {
+  display: block !important;
+  width: 100% !important;      /* phone-shell 안에서 가로 꽉 채우기 */
+  max-width: 320px !important; /* 최대 320px 이상은 절대 안 커짐 */
+  height: auto !important;
+  max-height: 180px !important;
+  object-fit: cover !important;
+  margin: 0 auto;              /* 가운데 정렬 */
+  border-radius: 12px;
+  background: #111827;
+}

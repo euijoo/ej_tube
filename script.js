@@ -387,7 +387,7 @@ googleLoginButton.addEventListener("click", async () => {
     loginError.textContent = "";
     await signInWithPopup(auth, provider);
   } catch (err) {
-    console.error(err.code, err.message);
+    console.error("login error:", err.code, err.message);
     if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
       loginError.textContent =
         "팝업이 차단되었어요. 브라우저 팝업/쿠키 설정을 확인해 주세요.";
@@ -398,18 +398,18 @@ googleLoginButton.addEventListener("click", async () => {
   }
 });
 
-
 logoutButton.addEventListener("click", async () => {
   try {
     await signOut(auth);
   } catch (err) {
     console.error(err);
-    alert("로그아웃 중 문제가 발생했어요.";
+    alert("로그아웃 중 문제가 발생했어요.");
   }
 });
 
 // 로그인 상태 감시
 onAuthStateChanged(auth, async (user) => {
+  console.log("auth state changed:", user);
   if (user) {
     currentUser = user;
     userEmailEl.textContent = user.email || "";

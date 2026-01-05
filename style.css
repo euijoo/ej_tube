@@ -17,11 +17,11 @@ body {
   background: #020617;
 }
 
-/* 폰 화면 폭: 상단 커버와 리스트가 공유하는 기준 폭 */
+/* 폰 화면 폭(상단 커버 + 리스트 기준) */
 .phone-shell {
-  max-width: 480px;    /* 아이폰 화면 안쪽 폭 느낌 */
-  margin: 0 auto;      /* 가운데 정렬 */
-  padding-bottom: 72px;/* 미니 플레이어 높이만큼 여백 */
+  max-width: 480px;
+  margin: 0 auto;
+  padding-bottom: 72px; /* 미니플레이어 높이만큼 여백 */
   box-sizing: border-box;
 }
 
@@ -29,7 +29,7 @@ body {
 /* 상단 커버(썸네일) 부분  */
 /* ======================= */
 
-/* 상단 커버 섹션: 썸네일 + 텍스트를 한 줄로 */
+/* 상단 커버 섹션: 썸네일 + 텍스트 */
 .cover-section {
   width: 100%;
   box-sizing: border-box;
@@ -40,33 +40,24 @@ body {
   border-bottom: 1px solid #111827;
 }
 
-/* 최상단 썸네일 이미지: phone-shell 안에서 리스트와 같은 폭 기준 */
-.cover-large {
+/* 상단 썸네일: 여기만 120x120 고정 */
+#thumbnail {
   flex: 0 0 auto;
-  width: 40%;          /* 섹션 안에서 40% 정도 사용 */
-  max-width: 140px;    /* 너무 커지지 않게 최대값 제한 */
-  max-height: 140px;
+  display: block;
+  width: 120px;
+  height: 120px;
   border-radius: 12px;
   object-fit: cover;
   background: #111827;
-  display: block;
 }
 
-/* 작은 화면에서는 조금 더 넓게 */
-@media (max-width: 360px) {
-  .cover-large {
-    width: 45%;
-    max-width: 140px;
-  }
-}
-
-/* 오른쪽 텍스트 영역 */
+/* 상단 텍스트 영역 */
 .cover-text {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-  flex: 1 1 auto;
 }
 
 .track-title-lg {
@@ -95,95 +86,178 @@ body {
 }
 
 /* ======================= */
-/* 플레이리스트 영역       */
+/* 미니 플레이어           */
 /* ======================= */
 
-.playlist-section {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 8px 0 72px;
-}
-
-.playlist-header {
+.mini-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 12px;
+  background: #020617;
+  border-top: 1px solid #111827;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  gap: 10px;
 }
 
-.playlist-title {
-  font-size: 14px;
-  margin: 0;
-}
-
-.playlist-sub {
-  font-size: 11px;
-  margin: 2px 0 0;
-  color: #9ca3af;
-}
-
-/* URL 입력 영역 */
-.input-area.big {
+/* 왼쪽 영역 */
+.mini-left {
   display: flex;
-  gap: 8px;
-  padding: 8px 16px;
-}
-
-.input-area.big input {
+  align-items: center;
+  gap: 10px;
   flex: 1;
-  border-radius: 999px;
-  border: 1px solid #1f2937;
-  background: #020617;
+  min-width: 0;
+}
+
+/* 커버 이미지 */
+.mini-cover {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* 텍스트 박스 */
+.mini-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mini-title {
+  font-size: 13px;
   color: #e5e7eb;
-  padding: 8px 12px;
-  font-size: 13px;
-}
-
-.input-area.big input::placeholder {
-  color: #6b7280;
-}
-
-/* 버튼 공통 */
-.btn {
-  border: none;
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 13px;
-  cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.btn.primary {
+.mini-artist {
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 오른쪽 버튼 영역 */
+.mini-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* 미니 플레이어 버튼 (id로 스타일링) */
+#miniPlayPauseBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
   background: #10b981;
   color: #020617;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
 }
 
-.btn.primary:hover {
-  background: #059669;
+/* ======================= */
+/* 트랙 리스트             */
+/* ======================= */
+
+#trackList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.btn.secondary {
+/* 각 아이템 */
+.track-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  gap: 10px;
+  background: #020617;
+  border-bottom: 1px solid #111827;
+}
+
+/* 현재 재생 중인 아이템 강조 */
+.track-item.active {
   background: #111827;
+}
+
+/* 썸네일 (리스트) */
+.track-item-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* 텍스트 영역 */
+.track-item-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.track-item-title {
+  font-size: 14px;
   color: #e5e7eb;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.btn.secondary:hover {
-  background: #1f2937;
-}
-
-/* 전체 비우기 버튼 */
-.clear-all {
-  display: block;
-  width: 100%;
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  color: #f97316;
+.track-item-artist {
   font-size: 12px;
-  text-align: right;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 오른쪽 삭제 버튼 래퍼 */
+.track-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* 삭제 버튼 */
+.delete-btn {
+  border: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #ef4444;
+  color: #f9fafb;
   cursor: pointer;
 }
 
-/* 트랙 리스트 */
-#trackList {
-  list-s
+.delete-btn:active {
+  background: #b91c1c;
+}
+
+/* ======================= */
+/* 유튜브 iframe 숨기기    */
+/* ======================= */
+
+/* 유튜브 iframe을 완전히 숨기기 (오디오만 사용) */
+.player-container {
+  display: none !important;
+}
+
+#player,
+.player-frame {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}

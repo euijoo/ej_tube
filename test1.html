@@ -1,1 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>ej_tube</title>
+  <meta
+  name="viewport"
+  content="width=device-width,
+           initial-scale=1.0,
+           maximum-scale=1.0,
+           user-scalable=no,
+           viewport-fit=cover">
 
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- 로그인 화면 -->
+    <div id="login-screen" class="lock-screen">
+      <div class="lock-card">
+        <h1 class="logo">ej_tube</h1>
+        <p class="lock-text">Google 계정으로 로그인해서 나만의 YouTube 플레이리스트를 관리하세요.</p>
+        <button id="googleLoginButton" class="btn primary">
+          Google로 로그인
+        </button>
+        <p id="loginError" class="error-text"></p>
+      </div>
+    </div>
+
+    <!-- 메인 화면 (로그인 후에만 표시) -->
+    <div id="main-screen" class="main-screen hidden">
+      <main class="phone-shell">
+        <!-- 상단 커버 & 정보 -->
+        <section class="cover-section">
+          <img id="thumbnail" class="cover-large" alt="cover" />
+          <div class="cover-text">
+            <h2 id="title" class="track-title-lg">제목</h2>
+            <p id="artist" class="track-artist-lg">아티스트</p>
+            <p id="userEmail" class="user-email"></p>
+          </div>
+        </section>
+
+        <!-- 플레이리스트 영역 -->
+        <section class="playlist-section">
+          <div class="playlist-header">
+            <div>
+              <h3 class="playlist-title">Playlist</h3>
+              <p class="playlist-sub">내가 추가한 YouTube / YouTube Music</p>
+            </div>
+            <button id="logoutButton" class="btn secondary">로그아웃</button>
+          </div>
+
+          <!-- URL 추가 -->
+          <div class="input-area big">
+            <input
+              type="text"
+              id="videoUrl"
+              placeholder="YouTube 또는 YouTube Music 주소를 붙여넣기"
+            />
+            <button id="addButton" class="btn primary">추가</button>
+          </div>
+
+          <!-- 리스트 -->
+          <ul id="trackList" class="track-list"></ul>
+          <button id="clearListButton" class="clear-all">전체 비우기</button>
+        </section>
+
+        <!-- YouTube iframe 플레이어 -->
+        <div class="player-container">
+          <div id="player" class="player-frame"></div>
+        </div>
+
+        <!-- 하단 미니 플레이어 (UI만, 기능은 나중에 확장 가능) -->
+        <footer class="mini-player">
+  <div class="mini-left">
+    <img id="miniThumb" class="mini-cover" alt="mini cover" />
+    <div class="mini-text">
+      <div id="miniTitle" class="mini-title">제목</div>
+      <div id="miniArtist" class="mini-artist">아티스트</div>
+    </div>
+  </div>
+  <div class="mini-right">
+    <!-- 하트 버튼 삭제 -->
+    <button id="miniPlayPauseBtn">&#x25B6;&#xFE0E;</button>
+  </div>
+</footer>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script type="module" src="script.js"></script>
+</body>
+</html>

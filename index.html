@@ -33,13 +33,19 @@
       <main class="phone-shell">
         <!-- 상단 커버 & 정보 -->
         <section class="cover-section">
-          <img id="thumbnail" class="cover-large" alt="cover" />
-          <div class="cover-text">
-            <h2 id="title" class="track-title-lg">제목</h2>
-            <p id="artist" class="track-artist-lg">아티스트</p>
-            <p id="userEmail" class="user-email"></p>
-          </div>
-        </section>
+  <div class="cover-wrapper">
+    <img id="thumbnail" class="cover-large" alt="cover" />
+    <button id="changeCoverBtn" class="cover-change-btn" title="커버 변경">
+      ⋯
+    </button>
+  </div>
+  <div class="cover-text">
+    <h2 id="title" class="track-title-lg">제목</h2>
+    <p id="artist" class="track-artist-lg">아티스트</p>
+    <p id="userEmail" class="user-email"></p>
+  </div>
+</section>
+
 
         <!-- 플레이리스트 영역 -->
         <section class="playlist-section">

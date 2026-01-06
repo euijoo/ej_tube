@@ -36,13 +36,14 @@ body {
   margin: 0;
   padding: 16px 0 8px;
   box-sizing: border-box;
+  text-align: center; /* 반드시 있어야 가운데 정렬됨 */
 }
 
-/* 커버 이미지 + 숨겨진 버튼 래퍼 */
 .cover-wrapper {
   position: relative;
-  display: inline-block;
+  display: inline-block; /* 이 상태 유지 */
 }
+
 
 /* 상단 썸네일 */
 #thumbnail {

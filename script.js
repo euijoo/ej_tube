@@ -14,6 +14,7 @@ import {
   getDocs,
   deleteDoc,
   doc,
+  updateDoc, // ← 제목 수정용
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 // Firebase 설정
@@ -285,6 +286,13 @@ async function clearTracksInFirestore() {
   await Promise.all(promises);
 }
 
+// 제목 수정 저장용
+async function updateTrackTitleInFirestore(id, newTitle) {
+  if (!currentUser) return;
+  const trackRef = doc(db, "users", currentUser.uid, "tracks", id);
+  await updateDoc(trackRef, { title: newTitle });
+}
+
 // ===== UI 렌더링 =====
 
 function renderTrackList() {
@@ -330,18 +338,25 @@ function renderTrackList() {
     const metaDiv = document.createElement("div");
     metaDiv.className = "track-item-meta";
 
+    // ===== 제목 편집 버튼 =====
+    const editBtn = document.createElement("button");
+    editBtn.className = "edit-btn";
+    editBtn.textContent = "편집";
+
     const delBtn = document.createElement("button");
     delBtn.className = "delete-btn";
     delBtn.textContent = "삭제";
 
+    metaDiv.appendChild(editBtn);
     metaDiv.appendChild(delBtn);
 
     li.appendChild(img);
     li.appendChild(textBox);
     li.appendChild(metaDiv);
 
+    // 리스트 전체 클릭 → 재생
     li.addEventListener("click", (e) => {
-      if (e.target === delBtn) return;
+      if (e.target === delBtn || e.target === editBtn) return;
       // 연속 탭으로 인한 Safari 크래시 방지용 락
       if (playClickLock) return;
       playClickLock = true;
@@ -352,9 +367,60 @@ function renderTrackList() {
       playTrack(track.id);
     });
 
+    // 삭제 버튼
     delBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
       await deleteTrack(track.id);
+    });
+
+    // 편집 버튼: 제목 인라인 수정
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      const currentTitle = track.title;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = currentTitle;
+      input.className = "track-title-input";
+      input.style.width = "100%";
+
+      titleDiv.replaceChildren(input);
+      input.focus();
+      input.select();
+
+      const finishEdit = async (save) => {
+        const newTitle = input.value.trim();
+        const finalTitle = save && newTitle ? newTitle : currentTitle;
+
+        track.title = finalTitle;
+        titleDiv.textContent = finalTitle;
+
+        if (save && newTitle && newTitle !== currentTitle) {
+          try {
+            await updateTrackTitleInFirestore(track.id, newTitle);
+            if (currentTrackId === track.id) {
+              updateNowPlaying(track);
+            }
+          } catch (err) {
+            console.error("제목 업데이트 실패:", err);
+            alert("제목을 저장하는 중 오류가 발생했어요.");
+            track.title = currentTitle;
+            titleDiv.textContent = currentTitle;
+          }
+        }
+      };
+
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          finishEdit(true);
+        } else if (ev.key === "Escape") {
+          finishEdit(false);
+        }
+      });
+
+      input.addEventListener("blur", () => {
+        finishEdit(true);
+      });
     });
 
     trackListEl.appendChild(li);
@@ -395,7 +461,6 @@ function updateNowPlaying(track) {
     miniArtist.textContent = track.channel;
   }
 
-  // Media Session 메타데이터도 같이 갱신
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
@@ -410,7 +475,7 @@ function updateNowPlaying(track) {
 
 // ===== 트랙 추가/삭제/재생 =====
 
-// 단일 영상 URL용 (기존 로직)
+// 단일 영상 URL용
 async function addTrackFromUrl(url) {
   if (!currentUser) {
     alert("먼저 Google 계정으로 로그인해 주세요.");
@@ -461,15 +526,13 @@ async function addFromInputUrl(url) {
 
   const playlistId = extractPlaylistId(url);
   if (playlistId) {
-    // 플레이리스트 전체 추가 모드
     try {
-      const videoIds = await fetchPlaylistItems(playlistId, 50); // 최대 50개
+      const videoIds = await fetchPlaylistItems(playlistId, 50);
       if (videoIds.length === 0) {
         alert("플레이리스트에 추가할 영상이 없습니다.");
         return;
       }
 
-      // 기존 tracks 뒤에 이어붙이기 (플레이리스트 순서 유지)
       const addedTracks = [];
       for (const vid of videoIds) {
         try {
@@ -491,7 +554,6 @@ async function addFromInputUrl(url) {
       }
 
       if (addedTracks.length > 0) {
-        // 플레이리스트에서 추가한 첫 곡으로 재생
         const firstTrack = addedTracks[0];
         currentTrackId = firstTrack.id;
         updateNowPlaying(firstTrack);
@@ -506,7 +568,6 @@ async function addFromInputUrl(url) {
     return;
   }
 
-  // playlistId 없으면 기존 단일 영상 로직
   await addTrackFromUrl(url);
 }
 
@@ -557,7 +618,6 @@ function playVideoById(videoId) {
       },
     });
 
-    // Media Session API 액션 핸들러 등록 (블루투스/시스템 재생 제어)
     if ("mediaSession" in navigator) {
       navigator.mediaSession.setActionHandler("play", () => {
         if (!player) return;
@@ -619,7 +679,6 @@ googleLoginButton.addEventListener("click", async () => {
 logoutButton.addEventListener("click", async () => {
   try {
     await signOut(auth);
-    // UI는 onAuthStateChanged에서 일괄 처리
   } catch (err) {
     console.error(err);
     alert("로그아웃 중 문제가 발생했어요.");
@@ -632,7 +691,6 @@ onAuthStateChanged(auth, async (user) => {
   console.log("auth state changed:", user);
 
   if (user) {
-    // 로그인 상태
     currentUser = user;
     userEmailEl.textContent = user.email || "";
 
@@ -650,15 +708,12 @@ onAuthStateChanged(auth, async (user) => {
       resetNowPlayingUI();
     }
   } else {
-    // 로그아웃 상태
     currentUser = null;
     tracks = [];
     currentTrackId = null;
 
-    // 재생 중이던 것 정리
     resetNowPlayingUI();
 
-    // 로그인 화면 표시, 메인 숨기기
     loginScreen.style.display = "flex";
     mainScreen.classList.add("hidden");
     loginError.textContent = "";
@@ -670,7 +725,7 @@ onAuthStateChanged(auth, async (user) => {
 addButton.addEventListener("click", () => {
   const url = videoUrlInput.value.trim();
   if (!url) return;
-  addFromInputUrl(url); // 여기서 플레이리스트/단일 영상 둘 다 처리
+  addFromInputUrl(url);
   videoUrlInput.value = "";
 });
 
@@ -719,7 +774,6 @@ document.addEventListener("gesturestart", function (e) {
 });
 
 if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-  // 두 손가락 이상 핀치 시작 막기
   document.addEventListener(
     "touchstart",
     function (e) {
@@ -730,7 +784,6 @@ if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
     { passive: false }
   );
 
-  // 핀치 중(scale 변화) 막기
   document.addEventListener(
     "touchmove",
     function (e) {
@@ -741,7 +794,6 @@ if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
     { passive: false }
   );
 
-  // 더블탭 줌 막기
   let lastTouchEnd = 0;
   document.addEventListener(
     "touchend",

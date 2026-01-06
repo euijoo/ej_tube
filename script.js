@@ -14,7 +14,7 @@ import {
   getDocs,
   deleteDoc,
   doc,
-  updateDoc, // ← 제목 수정용
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 // Firebase 설정
@@ -43,7 +43,8 @@ let currentUser = null;
 // ===== 전역 상태 =====
 
 let player = null;
-let tracks = []; // { id, videoId, title, channel, thumbnail, addedAt }
+// tracks: { id, videoId, title, channel, thumbnail, customThumbnail?, addedAt }
+let tracks = [];
 let currentTrackId = null;
 
 // 빠른 연속 클릭 방지용 락 (Safari 크래시 완화용)
@@ -70,6 +71,7 @@ const trackListEl = document.getElementById("trackList");
 const titleEl = document.getElementById("title");
 const artistEl = document.getElementById("artist");
 const thumbnailEl = document.getElementById("thumbnail");
+const changeCoverBtn = document.getElementById("changeCoverBtn");
 
 // ===== 유틸: videoId / playlistId 추출 =====
 
@@ -201,10 +203,8 @@ function onPlayerStateChange(event) {
   if (!window.YT) return;
   const state = event.data;
 
-  // 미니 플레이어 아이콘을 현재 상태에 맞게 갱신
   updateMiniButtonByPlayerState();
 
-  // Media Session API 쪽 재생 상태 동기화
   if ("mediaSession" in navigator) {
     if (state === YT.PlayerState.PLAYING) {
       navigator.mediaSession.playbackState = "playing";
@@ -215,7 +215,6 @@ function onPlayerStateChange(event) {
     }
   }
 
-  // === 다음 곡 자동재생 ===
   if (state === YT.PlayerState.ENDED) {
     if (!currentTrackId || tracks.length === 0) return;
 
@@ -224,7 +223,6 @@ function onPlayerStateChange(event) {
 
     const nextIndex = currentIndex + 1;
     if (nextIndex >= tracks.length) {
-      // 마지막 곡이면 멈춤
       return;
     }
 
@@ -253,6 +251,7 @@ async function loadTracksFromFirestore() {
       title: data.title,
       channel: data.channel,
       thumbnail: data.thumbnail,
+      customThumbnail: data.customThumbnail || null,
       addedAt: data.addedAt,
     });
   });
@@ -293,6 +292,13 @@ async function updateTrackTitleInFirestore(id, newTitle) {
   await updateDoc(trackRef, { title: newTitle });
 }
 
+// 커버 이미지(썸네일) 수정 저장용
+async function updateTrackCustomThumbnailInFirestore(id, url) {
+  if (!currentUser) return;
+  const trackRef = doc(db, "users", currentUser.uid, "tracks", id);
+  await updateDoc(trackRef, { customThumbnail: url });
+}
+
 // ===== UI 렌더링 =====
 
 function renderTrackList() {
@@ -318,7 +324,8 @@ function renderTrackList() {
 
     const img = document.createElement("img");
     img.className = "track-item-thumb";
-    img.src = track.thumbnail;
+    const listThumbUrl = track.customThumbnail || track.thumbnail;
+    img.src = listThumbUrl;
     img.alt = track.title;
 
     const textBox = document.createElement("div");
@@ -338,7 +345,6 @@ function renderTrackList() {
     const metaDiv = document.createElement("div");
     metaDiv.className = "track-item-meta";
 
-    // ===== 제목 편집 버튼 =====
     const editBtn = document.createElement("button");
     editBtn.className = "edit-btn";
     editBtn.textContent = "편집";
@@ -354,10 +360,8 @@ function renderTrackList() {
     li.appendChild(textBox);
     li.appendChild(metaDiv);
 
-    // 리스트 전체 클릭 → 재생
     li.addEventListener("click", (e) => {
       if (e.target === delBtn || e.target === editBtn) return;
-      // 연속 탭으로 인한 Safari 크래시 방지용 락
       if (playClickLock) return;
       playClickLock = true;
       setTimeout(() => {
@@ -367,13 +371,11 @@ function renderTrackList() {
       playTrack(track.id);
     });
 
-    // 삭제 버튼
     delBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
       await deleteTrack(track.id);
     });
 
-    // 편집 버튼: 제목 인라인 수정
     editBtn.addEventListener("click", (e) => {
       e.stopPropagation();
 
@@ -448,15 +450,25 @@ function resetNowPlayingUI() {
 }
 
 function updateNowPlaying(track) {
+  const coverUrl = track.customThumbnail || track.thumbnail;
+
   titleEl.textContent = track.title;
   artistEl.textContent = track.channel;
-  thumbnailEl.src = track.thumbnail;
+  if (coverUrl) {
+    thumbnailEl.src = coverUrl;
+  } else {
+    thumbnailEl.removeAttribute("src");
+  }
 
   const miniThumb = document.getElementById("miniThumb");
   const miniTitle = document.getElementById("miniTitle");
   const miniArtist = document.getElementById("miniArtist");
   if (miniThumb && miniTitle && miniArtist) {
-    miniThumb.src = track.thumbnail;
+    if (coverUrl) {
+      miniThumb.src = coverUrl;
+    } else {
+      miniThumb.removeAttribute("src");
+    }
     miniTitle.textContent = track.title;
     miniArtist.textContent = track.channel;
   }
@@ -465,17 +477,18 @@ function updateNowPlaying(track) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
       artist: track.channel,
-      artwork: [
-        { src: track.thumbnail, sizes: "96x96", type: "image/jpeg" },
-        { src: track.thumbnail, sizes: "256x256", type: "image/jpeg" },
-      ],
+      artwork: coverUrl
+        ? [
+            { src: coverUrl, sizes: "96x96", type: "image/jpeg" },
+            { src: coverUrl, sizes: "256x256", type: "image/jpeg" },
+          ]
+        : [],
     });
   }
 }
 
 // ===== 트랙 추가/삭제/재생 =====
 
-// 단일 영상 URL용
 async function addTrackFromUrl(url) {
   if (!currentUser) {
     alert("먼저 Google 계정으로 로그인해 주세요.");
@@ -496,6 +509,7 @@ async function addTrackFromUrl(url) {
       title: info.title,
       channel: info.channel,
       thumbnail: info.thumbnail,
+      customThumbnail: null,
       addedAt: Date.now(),
     };
 
@@ -542,6 +556,7 @@ async function addFromInputUrl(url) {
             title: info.title,
             channel: info.channel,
             thumbnail: info.thumbnail,
+            customThumbnail: null,
             addedAt: Date.now(),
           };
           const docId = await addTrackToFirestore(newTrackData);
@@ -748,6 +763,39 @@ clearListButton.addEventListener("click", async () => {
   renderTrackList();
   resetNowPlayingUI();
 });
+
+// ===== 상단 커버 변경 버튼 (⋯) =====
+
+if (changeCoverBtn) {
+  changeCoverBtn.addEventListener("click", async () => {
+    if (!currentTrackId) {
+      alert("먼저 재생할 곡을 선택해 주세요.");
+      return;
+    }
+    const track = tracks.find((t) => t.id === currentTrackId);
+    if (!track) return;
+
+    const currentUrl = track.customThumbnail || track.thumbnail || "";
+    const url = prompt(
+      "새 커버 이미지 주소를 입력하세요.\n(빈 값으로 저장하면 원래 썸네일로 돌아갑니다.)",
+      currentUrl
+    );
+    if (url === null) return; // 취소
+
+    const trimmed = url.trim();
+    const newCustom = trimmed || null;
+
+    try {
+      await updateTrackCustomThumbnailInFirestore(track.id, newCustom);
+      track.customThumbnail = newCustom;
+      updateNowPlaying(track);
+      renderTrackList();
+    } catch (err) {
+      console.error("커버 이미지 업데이트 실패:", err);
+      alert("커버 이미지를 저장하는 중 오류가 발생했어요.");
+    }
+  });
+}
 
 // ===== 미니 플레이어 재생/일시정지 버튼 =====
 

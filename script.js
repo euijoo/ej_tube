@@ -879,6 +879,9 @@ onAuthStateChanged(auth, async (user) => {
     loginScreen.style.display = "none";
     mainScreen.classList.remove("hidden");
 
+// ✅ 앨범 먼저 로드 (나중에 UI에서 사용)
+    await loadAlbumsFromFirestore();
+    
     await loadTracksFromFirestore();
     renderTrackList();
 

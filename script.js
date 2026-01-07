@@ -400,6 +400,17 @@ function createTrackListItem(track) {
   changeCoverItem.type = "button";
   changeCoverItem.textContent = "Change cover image";
 
+  // 🔽 추가된 부분
+  const moveToAlbumItem = document.createElement("button");
+  moveToAlbumItem.className = "track-menu-item";
+  moveToAlbumItem.type = "button";
+  moveToAlbumItem.textContent = "Move to album";
+
+  const removeFromAlbumItem = document.createElement("button");
+  removeFromAlbumItem.className = "track-menu-item";
+  removeFromAlbumItem.type = "button";
+  removeFromAlbumItem.textContent = "Remove from album";
+
   const removeItem = document.createElement("button");
   removeItem.className = "track-menu-item danger";
   removeItem.type = "button";
@@ -407,7 +418,10 @@ function createTrackListItem(track) {
 
   menu.appendChild(renameItem);
   menu.appendChild(changeCoverItem);
+  menu.appendChild(moveToAlbumItem);
+  menu.appendChild(removeFromAlbumItem);
   menu.appendChild(removeItem);
+
 
   metaDiv.appendChild(menuBtn);
   metaDiv.appendChild(menu);
@@ -422,6 +436,8 @@ function createTrackListItem(track) {
       e.target === menuBtn ||
       e.target === renameItem ||
       e.target === changeCoverItem ||
+      e.target === moveToAlbumItem ||
+      e.target === removeFromAlbumItem ||
       e.target === removeItem
     )
       return;
@@ -555,7 +571,37 @@ function renderTrackList() {
   mainSection.appendChild(mainUl);
   trackListEl.appendChild(mainSection);
 
-  // albumTrackMap / albums는 다음 단계에서 사용
+  // 🔽🔽 여기부터: 앨범 섹션들 렌더링 🔽🔽
+
+  // albums 배열을 이름 순으로 한 번 더 정렬(혹시 로딩 시점에서 변경됐을 수 있으니)
+  const sortedAlbums = [...albums].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
+  sortedAlbums.forEach((album) => {
+    const albumTracks = albumTrackMap[album.id] || [];
+    if (albumTracks.length === 0) return; // 이 앨범에 속한 트랙이 없으면 스킵
+
+    const section = document.createElement("div");
+    section.className = "album-section";
+
+    const header = document.createElement("div");
+    header.className = "album-header";
+    header.textContent = album.name;
+
+    const ul = document.createElement("ul");
+    ul.className = "album-track-list";
+
+    albumTracks.forEach((track) => {
+      const li = createTrackListItem(track);
+      ul.appendChild(li);
+    });
+
+    section.appendChild(header);
+    section.appendChild(ul);
+    trackListEl.appendChild(section);
+  });
+}
 }
 
 

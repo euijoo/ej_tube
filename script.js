@@ -326,6 +326,26 @@ async function updateTrackCustomThumbnailInFirestore(id, url) {
   await updateDoc(trackRef, { customThumbnail: url });
 }
 
+// ✅ 여기부터 추가
+// albumId 기준으로 트랙을 나누는 헬퍼
+function splitTracksByAlbum() {
+  const mainTracks = [];
+  const albumTrackMap = {}; // { albumId: [tracks...] }
+
+  tracks.forEach((t) => {
+    if (!t.albumId) {
+      mainTracks.push(t);
+    } else {
+      if (!albumTrackMap[t.albumId]) {
+        albumTrackMap[t.albumId] = [];
+      }
+      albumTrackMap[t.albumId].push(t);
+    }
+  });
+
+  return { mainTracks, albumTrackMap };
+}
+
 // ===== UI 렌더링 =====
 
 function renderTrackList() {

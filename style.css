@@ -288,8 +288,7 @@ body {
   outline: none;
 }
 
-/* 기존 편집/삭제 버튼 스타일은 더 이상 사용 안 해도 되지만,
-   혹시 다른 곳에서 쓰고 있다면 남겨둔다. */
+/* 기존 편집/삭제 버튼 스타일 (예비용) */
 .edit-btn {
   border: none;
   padding: 4px 8px;
@@ -483,4 +482,60 @@ body {
 .cover-sheet-btn.save {
   background: #10b981;
   color: #020617;
+}
+
+/* ===== 삭제 확인 모달 ===== */
+
+.delete-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.delete-confirm-backdrop.show {
+  display: flex;
+}
+
+.delete-confirm-dialog {
+  background: #020617;
+  border-radius: 12px;
+  padding: 12px 16px 10px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+  max-width: 260px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.delete-confirm-message {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.delete-confirm-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.delete-confirm-btn.no {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+.delete-confirm-btn.yes {
+  background: #ef4444;
+  color: #f9fafb;
 }

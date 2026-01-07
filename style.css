@@ -539,3 +539,78 @@ body {
   background: #ef4444;
   color: #f9fafb;
 }
+
+
+/* ===== 앨범 카드 + 아코디언 ===== */
+
+/* 앨범 카드 전체 래퍼 */
+.album-item-wrapper {
+  border-top: 1px solid #111827;
+}
+
+/* 앨범 헤더: 썸네일 + 텍스트 + 토글 버튼 */
+.album-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+/* 앨범 썸네일 (트랙 썸네일과 톤 맞춤) */
+.album-item-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  transform: scale(1.01);
+}
+
+/* 앨범 이름/트랙 개수 */
+.album-item-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.album-item-name {
+  font-size: 14px;
+  color: #e5e7eb;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.album-item-count {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* 펼침/접힘 아이콘 버튼 */
+.album-item-toggle {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+/* 접히는 앨범 트랙 리스트 */
+.album-track-list-collapsible {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 4px 50px; /* 썸네일 라인 맞추기용 들여쓰기 */
+  overflow: hidden;
+  transition: max-height 0.2s ease;
+  border-bottom: 1px solid #111827;
+}
+
+/* 앨범이 열린 상태일 때 배경 살짝 강조 (선택사항) */
+.album-item-wrapper.open .album-item-header {
+  background: #020617;
+}

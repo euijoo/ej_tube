@@ -42,8 +42,7 @@ let player = null;
 let tracks = [];
 let currentTrackId = null;
 
-let albums = []; // { id, name, createdAt } 앨범 리스트
-
+let albums = []; // { id, name, createdAt }
 
 let playClickLock = false;
 
@@ -225,7 +224,6 @@ function getTracksCollectionRef(uid) {
   return collection(db, "users", uid, "tracks");
 }
 
-// ✅ 앨범 컬렉션
 function getAlbumsCollectionRef(uid) {
   return collection(db, "users", uid, "albums");
 }
@@ -264,7 +262,6 @@ async function updateTrackAlbumInFirestore(id, albumId) {
   await updateDoc(trackRef, { albumId });
 }
 
-
 async function loadTracksFromFirestore() {
   if (!currentUser) return;
 
@@ -281,7 +278,7 @@ async function loadTracksFromFirestore() {
       thumbnail: data.thumbnail,
       customThumbnail: data.customThumbnail || null,
       addedAt: data.addedAt,
-      albumId: data.albumId || null,   // ✅ 이 줄 추가
+      albumId: data.albumId || null,
     });
   });
 
@@ -326,13 +323,11 @@ async function updateTrackCustomThumbnailInFirestore(id, url) {
   await updateDoc(trackRef, { customThumbnail: url });
 }
 
-
 // ===== UI 렌더링 =====
 
-// albumId 기준으로 트랙을 나누는 헬퍼
 function splitTracksByAlbum() {
   const mainTracks = [];
-  const albumTrackMap = {}; // { albumId: [tracks...] }
+  const albumTrackMap = {};
 
   tracks.forEach((t) => {
     if (!t.albumId) {
@@ -348,7 +343,6 @@ function splitTracksByAlbum() {
   return { mainTracks, albumTrackMap };
 }
 
-// 공통: 트랙 하나(li) 렌더링
 function createTrackListItem(track) {
   const li = document.createElement("li");
   li.className = "track-item";
@@ -400,7 +394,6 @@ function createTrackListItem(track) {
   changeCoverItem.type = "button";
   changeCoverItem.textContent = "Change cover image";
 
-  // 🔽 추가된 부분
   const moveToAlbumItem = document.createElement("button");
   moveToAlbumItem.className = "track-menu-item";
   moveToAlbumItem.type = "button";
@@ -422,7 +415,6 @@ function createTrackListItem(track) {
   menu.appendChild(removeFromAlbumItem);
   menu.appendChild(removeItem);
 
-
   metaDiv.appendChild(menuBtn);
   metaDiv.appendChild(menu);
 
@@ -430,7 +422,6 @@ function createTrackListItem(track) {
   li.appendChild(textBox);
   li.appendChild(metaDiv);
 
-  // 트랙 클릭 → 재생
   li.addEventListener("click", (e) => {
     if (
       e.target === menuBtn ||
@@ -451,7 +442,6 @@ function createTrackListItem(track) {
     playTrack(track.id);
   });
 
-  // ... 버튼 클릭 → 메뉴 토글
   menuBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     const isOpen = menu.classList.contains("open");
@@ -461,7 +451,6 @@ function createTrackListItem(track) {
     }
   });
 
-  // Rename title
   renameItem.addEventListener("click", (e) => {
     e.stopPropagation();
     closeAllTrackMenus();
@@ -512,7 +501,6 @@ function createTrackListItem(track) {
     });
   });
 
-  // Change cover image
   changeCoverItem.addEventListener("click", (e) => {
     e.stopPropagation();
     closeAllTrackMenus();
@@ -521,7 +509,78 @@ function createTrackListItem(track) {
     showCoverSheetForTrack(track, currentUrl);
   });
 
-  // Remove from playlist
+  moveToAlbumItem.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    closeAllTrackMenus();
+
+    if (!currentUser) {
+      alert("먼저 Google 계정으로 로그인해 주세요.");
+      return;
+    }
+
+    const currentAlbum =
+      albums.find((a) => a.id === track.albumId)?.name || "Main list";
+
+    const input = prompt(
+      [
+        "Move to album",
+        "",
+        `현재 앨범: ${currentAlbum}`,
+        "원하는 앨범 이름을 입력하세요.",
+        "(새 이름이면 새 앨범이 생성됩니다.)",
+      ].join("\n"),
+      currentAlbum === "Main list" ? "" : currentAlbum
+    );
+
+    if (input === null) return;
+
+    const name = input.trim();
+    if (!name) {
+      try {
+        await updateTrackAlbumInFirestore(track.id, null);
+        track.albumId = null;
+        renderTrackList();
+      } catch (err) {
+        console.error("앨범 해제 실패:", err);
+        alert("앨범에서 빼는 중 오류가 발생했어요.");
+      }
+      return;
+    }
+
+    let album = albums.find(
+      (a) => a.name.toLowerCase() === name.toLowerCase()
+    );
+
+    try {
+      if (!album) {
+        album = await addAlbumToFirestore(name);
+      }
+
+      await updateTrackAlbumInFirestore(track.id, album.id);
+      track.albumId = album.id;
+      renderTrackList();
+    } catch (err) {
+      console.error("앨범 이동 실패:", err);
+      alert("앨범으로 이동하는 중 오류가 발생했어요.");
+    }
+  });
+
+  removeFromAlbumItem.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    closeAllTrackMenus();
+
+    if (!track.albumId) return;
+
+    try {
+      await updateTrackAlbumInFirestore(track.id, null);
+      track.albumId = null;
+      renderTrackList();
+    } catch (err) {
+      console.error("앨범에서 제거 실패:", err);
+      alert("앨범에서 빼는 중 오류가 발생했어요.");
+    }
+  });
+
   removeItem.addEventListener("click", (e) => {
     e.stopPropagation();
     closeAllTrackMenus();
@@ -551,7 +610,6 @@ function renderTrackList() {
 
   const { mainTracks, albumTrackMap } = splitTracksByAlbum();
 
-  // 메인 리스트 섹션
   const mainSection = document.createElement("div");
   mainSection.className = "album-section";
 
@@ -571,16 +629,13 @@ function renderTrackList() {
   mainSection.appendChild(mainUl);
   trackListEl.appendChild(mainSection);
 
-  // 🔽🔽 여기부터: 앨범 섹션들 렌더링 🔽🔽
-
-  // albums 배열을 이름 순으로 한 번 더 정렬(혹시 로딩 시점에서 변경됐을 수 있으니)
   const sortedAlbums = [...albums].sort((a, b) =>
     a.name.localeCompare(b.name)
   );
 
   sortedAlbums.forEach((album) => {
     const albumTracks = albumTrackMap[album.id] || [];
-    if (albumTracks.length === 0) return; // 이 앨범에 속한 트랙이 없으면 스킵
+    if (albumTracks.length === 0) return;
 
     const section = document.createElement("div");
     section.className = "album-section";
@@ -602,8 +657,6 @@ function renderTrackList() {
     trackListEl.appendChild(section);
   });
 }
-}
-
 
 // 삭제 확인 모달
 function showDeleteConfirm(onYes) {
@@ -679,7 +732,6 @@ function showDeleteConfirm(onYes) {
   backdrop.classList.add("show");
 }
 
-// 전역 메뉴 닫기 핸들러
 function handleGlobalMenuClose() {
   closeAllTrackMenus();
 }
@@ -765,14 +817,14 @@ async function addTrackFromUrl(url) {
     const info = await fetchVideoInfo(videoId);
 
     const newTrackData = {
-  videoId,
-  title: info.title,
-  channel: info.channel,
-  thumbnail: info.thumbnail,
-  customThumbnail: null,
-  addedAt: Date.now(),
-  albumId: null,             // ✅ 기본값
-};
+      videoId,
+      title: info.title,
+      channel: info.channel,
+      thumbnail: info.thumbnail,
+      customThumbnail: null,
+      addedAt: Date.now(),
+      albumId: null,
+    };
 
     const docId = await addTrackToFirestore(newTrackData);
     const newTrack = { id: docId, ...newTrackData };
@@ -807,14 +859,14 @@ async function addFromInputUrl(url) {
         try {
           const info = await fetchVideoInfo(vid);
           const newTrackData = {
-  videoId: vid,
-  title: info.title,
-  channel: info.channel,
-  thumbnail: info.thumbnail,
-  customThumbnail: null,
-  addedAt: Date.now(),
-  albumId: null,             // ✅ 기본값
-};
+            videoId: vid,
+            title: info.title,
+            channel: info.channel,
+            thumbnail: info.thumbnail,
+            customThumbnail: null,
+            addedAt: Date.now(),
+            albumId: null,
+          };
           const docId = await addTrackToFirestore(newTrackData);
           const newTrack = { id: docId, ...newTrackData };
           tracks.push(newTrack);
@@ -968,9 +1020,9 @@ onAuthStateChanged(auth, async (user) => {
     loginScreen.style.display = "none";
     mainScreen.classList.remove("hidden");
 
- // ✅ 일단 주석 처리해서 에러를 막는다
+    // 앨범 로딩은 필요해지면 주석 해제
     // await loadAlbumsFromFirestore();
-    
+
     await loadTracksFromFirestore();
     renderTrackList();
 
@@ -1094,7 +1146,6 @@ function hideCoverSheet() {
   coverSheetBackdrop.classList.remove("show");
 }
 
-// 특정 트랙 기준으로 커버 바꾸기
 function showCoverSheetForTrack(track, currentUrl) {
   showCoverSheet(currentUrl);
 
@@ -1133,7 +1184,6 @@ function showCoverSheetForTrack(track, currentUrl) {
   coverSheetInput.addEventListener("keydown", handleKeydown);
 }
 
-// 상단 커버 버튼 → 현재 트랙 기준으로 호출
 if (changeCoverBtn) {
   changeCoverBtn.addEventListener("click", () => {
     if (!currentTrackId) {

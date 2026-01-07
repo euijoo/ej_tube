@@ -371,7 +371,6 @@ function renderTrackList() {
 
     // 트랙 클릭 → 재생
     li.addEventListener("click", (e) => {
-      // 메뉴/버튼 영역 클릭은 무시
       if (
         e.target === menuBtn ||
         e.target === renameItem ||
@@ -459,15 +458,92 @@ function renderTrackList() {
       showCoverSheetForTrack(track, currentUrl);
     });
 
-    // Remove from playlist
-    removeItem.addEventListener("click", async (e) => {
+    // Remove from playlist (모달 확인 후 삭제)
+    removeItem.addEventListener("click", (e) => {
       e.stopPropagation();
       closeAllTrackMenus();
-      await deleteTrack(track.id);
+
+      showDeleteConfirm(async () => {
+        await deleteTrack(track.id);
+      });
     });
 
     trackListEl.appendChild(li);
   });
+}
+
+// 삭제 확인 모달
+function showDeleteConfirm(onYes) {
+  let backdrop = document.querySelector(".delete-confirm-backdrop");
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.className = "delete-confirm-backdrop";
+
+    const dialog = document.createElement("div");
+    dialog.className = "delete-confirm-dialog";
+
+    const msg = document.createElement("p");
+    msg.className = "delete-confirm-message";
+    msg.textContent = "이 트랙을 플레이리스트에서 삭제할까요?";
+
+    const actions = document.createElement("div");
+    actions.className = "delete-confirm-actions";
+
+    const noBtn = document.createElement("button");
+    noBtn.className = "delete-confirm-btn no";
+    noBtn.textContent = "No";
+
+    const yesBtn = document.createElement("button");
+    yesBtn.className = "delete-confirm-btn yes";
+    yesBtn.textContent = "Yes";
+
+    actions.appendChild(noBtn);
+    actions.appendChild(yesBtn);
+    dialog.appendChild(msg);
+    dialog.appendChild(actions);
+    backdrop.appendChild(dialog);
+    document.body.appendChild(backdrop);
+  }
+
+  const yesBtn = backdrop.querySelector(".delete-confirm-btn.yes");
+  const noBtn = backdrop.querySelector(".delete-confirm-btn.no");
+
+  const close = () => {
+    backdrop.classList.remove("show");
+    yesBtn.removeEventListener("click", handleYes);
+    noBtn.removeEventListener("click", handleNo);
+    backdrop.removeEventListener("click", handleBackdrop);
+    document.removeEventListener("keydown", handleKeydown);
+  };
+
+  const handleYes = () => {
+    onYes();
+    close();
+  };
+
+  const handleNo = () => {
+    close();
+  };
+
+  const handleBackdrop = (e) => {
+    if (e.target === backdrop) {
+      close();
+    }
+  };
+
+  const handleKeydown = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    }
+  };
+
+  yesBtn.addEventListener("click", handleYes);
+  noBtn.addEventListener("click", handleNo);
+  backdrop.addEventListener("click", handleBackdrop);
+  document.addEventListener("keydown", handleKeydown);
+
+  backdrop.classList.add("show");
 }
 
 // 전역 메뉴 닫기 핸들러

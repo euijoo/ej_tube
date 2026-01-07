@@ -368,11 +368,11 @@ function createTrackListItem(track) {
   titleDiv.textContent = track.title;
 
   const artistDiv = document.createElement("div");
-  artistDiv.className = "track-item-artist";
-  artistDiv.textContent = track.channel;
+  //artistDiv.className = "track-item-artist";
+  //artistDiv.textContent = track.channel;
 
   textBox.appendChild(titleDiv);
-  textBox.appendChild(artistDiv);
+  //textBox.appendChild(artistDiv);
 
   const metaDiv = document.createElement("div");
   metaDiv.className = "track-item-meta";

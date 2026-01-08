@@ -26,7 +26,7 @@ body {
   width: 100%;
   min-height: 100vh;
   margin: 0;
-  padding: 0 16px 72px;
+  padding: 0 16px 72px; /* 하단 미니플레이어 높이(약 56~64px)만큼 여유 */
   box-sizing: border-box;
 }
 
@@ -322,7 +322,8 @@ body {
   margin-top: 8px;
 }
 
-/* 미니 플레이어 */
+/* ===== 하단 미니 플레이어 ===== */
+
 .mini-player {
   position: fixed;
   bottom: 0;
@@ -335,8 +336,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  z-index: 1000;
 }
 
+.mini-player__left,
 .mini-left {
   display: flex;
   align-items: center;
@@ -345,19 +348,30 @@ body {
   min-width: 0;
 }
 
+.mini-player__image,
 .mini-cover {
   width: 40px;
   height: 40px;
   border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mini-player__image img,
+.mini-cover {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
+.mini-player__text,
 .mini-text {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
+.mini-player__title,
 .mini-title {
   font-size: 13px;
   color: #e5e7eb;
@@ -366,6 +380,7 @@ body {
   text-overflow: ellipsis;
 }
 
+.mini-player__artist,
 .mini-artist {
   font-size: 11px;
   color: #9ca3af;
@@ -374,6 +389,7 @@ body {
   text-overflow: ellipsis;
 }
 
+.mini-player__right,
 .mini-right {
   display: flex;
   align-items: center;
@@ -381,6 +397,7 @@ body {
 }
 
 /* 미니 플레이어 버튼 */
+.mini-player__control-btn,
 #miniPlayPauseBtn {
   width: 40px;
   height: 40px;
@@ -540,7 +557,6 @@ body {
   color: #f9fafb;
 }
 
-
 /* ===== 앨범 카드 + 아코디언 ===== */
 
 /* 앨범 카드 전체 래퍼 */
@@ -613,4 +629,27 @@ body {
 /* 앨범이 열린 상태일 때 배경 살짝 강조 (선택사항) */
 .album-item-wrapper.open .album-item-header {
   background: #020617;
+}
+
+/* 모바일에서 조금 더 컴팩트하게 */
+@media (max-width: 768px) {
+  .mini-player {
+    padding: 6px 10px;
+  }
+
+  .mini-player__image,
+  .mini-cover {
+    width: 36px;
+    height: 36px;
+  }
+
+  .mini-player__title,
+  .mini-title {
+    font-size: 12px;
+  }
+
+  .mini-player__artist,
+  .mini-artist {
+    font-size: 10px;
+  }
 }

@@ -80,21 +80,27 @@
           <div id="player" class="player-frame"></div>
         </div>
 
-        <!-- 하단 미니 플레이어 -->
-        <footer class="mini-player">
-          <div class="mini-left">
-            <img id="miniThumb" class="mini-cover" alt="mini cover" />
-            <div class="mini-text">
-              <div id="miniTitle" class="mini-title">제목</div>
-              <div id="miniArtist" class="mini-artist">아티스트</div>
-            </div>
-          </div>
-          <div class="mini-right">
-            <button id="miniPlayPauseBtn">&#x25B6;&#xFE0E;</button>
-          </div>
-        </footer>
-
       </main>
+
+      <!-- 하단 미니 플레이어 (앱 전체 공용) -->
+      <footer class="mini-player">
+        <div class="mini-player__left">
+          <div class="mini-player__image">
+            <img id="miniThumb" src="" alt="mini cover" />
+          </div>
+          <div class="mini-player__text">
+            <div id="miniTitle" class="mini-player__title">제목</div>
+            <div id="miniArtist" class="mini-player__artist">아티스트</div>
+          </div>
+        </div>
+
+        <div class="mini-player__right">
+          <!-- 추후 script.js에서 상태에 따라 ▶/⏸ 아이콘 토글 -->
+          <button id="miniPlayPauseBtn" class="mini-player__control-btn" type="button" aria-label="재생/일시정지">
+            &#x25B6;&#xFE0E;
+          </button>
+        </div>
+      </footer>
     </div>
   </div>
 

@@ -47,8 +47,14 @@ let albums = []; // { id, name, createdAt }
 let playClickLock = false;
 
 // ===== DOM 참조 =====
-const miniPlayPauseBtn = document.getElementById("miniPlayPauseBtn");
 
+// 하단 미니 플레이어
+const miniPlayPauseBtn = document.getElementById("miniPlayPauseBtn");
+const miniThumb = document.getElementById("miniThumb");
+const miniTitle = document.getElementById("miniTitle");
+const miniArtist = document.getElementById("miniArtist");
+
+// 로그인 / 메인 UI
 const loginScreen = document.getElementById("login-screen");
 const googleLoginButton = document.getElementById("googleLoginButton");
 const loginError = document.getElementById("loginError");
@@ -367,11 +373,7 @@ function createTrackListItem(track) {
   titleDiv.className = "track-item-title";
   titleDiv.textContent = track.title;
 
-  const artistDiv = document.createElement("div");
- 
-
   textBox.appendChild(titleDiv);
- 
 
   const metaDiv = document.createElement("div");
   metaDiv.className = "track-item-meta";
@@ -823,9 +825,6 @@ function resetNowPlayingUI() {
   artistEl.textContent = "아티스트";
   thumbnailEl.removeAttribute("src");
 
-  const miniThumb = document.getElementById("miniThumb");
-  const miniTitle = document.getElementById("miniTitle");
-  const miniArtist = document.getElementById("miniArtist");
   if (miniThumb && miniTitle && miniArtist) {
     miniThumb.removeAttribute("src");
     miniTitle.textContent = "제목";
@@ -849,9 +848,6 @@ function updateNowPlaying(track) {
     thumbnailEl.removeAttribute("src");
   }
 
-  const miniThumb = document.getElementById("miniThumb");
-  const miniTitle = document.getElementById("miniTitle");
-  const miniArtist = document.getElementById("miniArtist");
   if (miniThumb && miniTitle && miniArtist) {
     if (coverUrl) {
       miniThumb.src = coverUrl;

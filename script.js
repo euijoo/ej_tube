@@ -704,7 +704,20 @@ function renderTrackList() {
 
   const { mainTracks, albumTrackMap } = splitTracksByAlbum();
 
-  // 1) Main list
+  // 1) Album cards (accordion) 먼저
+  const sortedAlbums = [...albums].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+
+  sortedAlbums.forEach((album) => {
+    const albumTracks = albumTrackMap[album.id] || [];
+    if (albumTracks.length === 0) return;
+
+    const albumItem = createAlbumItem(album, albumTracks);
+    trackListEl.appendChild(albumItem);
+  });
+
+  // 2) 그 아래 Main list (앨범에 속하지 않은 트랙들)
   const mainSection = document.createElement("div");
   mainSection.className = "album-section";
 
@@ -715,8 +728,8 @@ function renderTrackList() {
   const mainUl = document.createElement("ul");
   mainUl.className = "album-track-list";
 
-  mainTracks.forEach((t) => {
-    const li = createTrackListItem(t);
+  mainTracks.forEach((track) => {
+    const li = createTrackListItem(track);
     mainUl.appendChild(li);
   });
 

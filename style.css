@@ -577,7 +577,10 @@ delete-confirm-btn.yes {
 .album-item-thumb {
   width: 40px;
   height: 40px;
-  border-radius아래가 `style.css` 기준, 트랙 메뉴가 항상 아래로만 열리도록 반영한 **전체 수정 버전**이다. [file:3]
+  border-radius: 6px;
+  object-fit: cover;
+  transform: scale(1.01);
+}
 
 ```css
 html,

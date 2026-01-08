@@ -1203,7 +1203,7 @@ body {
   list-style: none;
   margin: 0;
   padding: 0 0 4px 50px; /* 썸네일 라인 맞추기용 들여쓰기 */
-  overflow: hidden;
+ 
   transition: max-height 0.2s ease;
   border-bottom: 1px solid #111827;
 }

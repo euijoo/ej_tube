@@ -228,28 +228,31 @@ body {
   color: #e5e7eb;
 }
 
-/* === 트랙 메뉴: 슬라이드업 팝업 === */
+/* 기존 .track-menu 정의를 이걸로 교체 */
 .track-menu {
   position: absolute;
   right: 0;
-  bottom: 0;
+  top: 100%;              /* 버튼 바로 아래에 붙게 */
+  /* bottom: 0;  ← 이 줄은 삭제 */
   background: rgba(15, 23, 42, 0.98);
-  border-radius: 12px 12px 0 0;
+  border-radius: 12px;    /* 위아래 둥글게 */
   min-width: 180px;
   padding: 6px 0;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(12px);
+  transform: translateY(4px);
   transition: opacity 0.2s ease-out, transform 0.2s ease-out;
   z-index: 30;
 }
 
+/* 열렸을 때는 기존 .track-menu.open 그대로 사용 */
 .track-menu.open {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
 }
+
 
 /* 안쪽 버튼들 */
 .track-menu-item {

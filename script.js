@@ -1,3 +1,4 @@
+let openAlbumIds = new Set(); // 열린 앨범 ID 저장
 // ===== Firebase SDK import & 초기화 =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
@@ -557,24 +558,38 @@ function createAlbumItem(album, albumTracks) {
 
   albumTracks.forEach((t) => ul.appendChild(createTrackListItem(t)));
 
-  header.addEventListener("click", (e) => {
-    e.stopPropagation();
+  const toggle = () => {
     const isOpen = wrapper.classList.contains("open");
     if (isOpen) {
       wrapper.classList.remove("open");
       ul.style.maxHeight = "0";
       toggleBtn.textContent = "▼";
+      openAlbumIds.delete(album.id); // 닫힐 때 제거
     } else {
       wrapper.classList.add("open");
       ul.style.maxHeight = ul.scrollHeight + "px";
       toggleBtn.textContent = "▲";
+      openAlbumIds.add(album.id); // 열릴 때 추가
     }
+  };
+
+  header.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggle();
   });
+
+  // 🔽 이전에 열려 있었으면 자동으로 열기
+  if (openAlbumIds.has(album.id)) {
+    wrapper.classList.add("open");
+    ul.style.maxHeight = ul.scrollHeight + "px";
+    toggleBtn.textContent = "▲";
+  }
 
   wrapper.appendChild(header);
   wrapper.appendChild(ul);
   return wrapper;
 }
+
 
 function renderTrackList() {
   trackListEl.innerHTML = "";

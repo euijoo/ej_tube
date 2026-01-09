@@ -346,21 +346,48 @@ function createTrackListItem(track) {
   li.appendChild(metaDiv);
 
   li.addEventListener("click", (e) => {
-    if (
-      e.target === menuBtn ||
-      e.target === renameItem ||
-      e.target === changeCoverItem ||
-      e.target === moveToAlbumItem ||
-      e.target === removeFromAlbumItem ||
-      e.target === removeItem
-    )
-      return;
+  if (
+    e.target === menuBtn ||
+    e.target === renameItem ||
+    e.target === changeCoverItem ||
+    e.target === moveToAlbumItem ||
+    e.target === removeFromAlbumItem ||
+    e.target === removeItem
+  )
+    return;
 
-    if (playClickLock) return;
-    playClickLock = true;
-    setTimeout(() => (playClickLock = false), 400);
-    playTrack(track.id);
-  });
+  if (playClickLock) return;
+  playClickLock = true;
+  setTimeout(() => (playClickLock = false), 400);
+
+  // 1. 현재 선택된 트랙이 아니면 → 선택만
+  if (currentTrackId !== track.id) {
+    currentTrackId = track.id;
+    updateNowPlaying(track);
+    renderTrackList();
+    return;
+  }
+
+  // 2. 이미 선택된 트랙이면 → 재생/일시정지 토글
+  if (!player || !window.YT) {
+    // 플레이어가 없으면 새로 재생
+    playVideoById(track.videoId);
+  } else {
+    try {
+      const state = player.getPlayerState();
+      if (state === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
+      updateNewMiniPlayer();
+    } catch (err) {
+      // 에러 시 재로드
+      playVideoById(track.videoId);
+    }
+  }
+});
+
 
   menuBtn.addEventListener("click", (e) => {
     e.stopPropagation();

@@ -450,11 +450,12 @@ body {
 .album-track-list-collapsible {
   list-style: none;
   margin: 0;
-  padding: 0 0 4px 50px;
+  padding: 0; /* 들여쓰기 제거 */
   overflow: hidden;
   transition: max-height 0.2s ease;
   border-bottom: 1px solid #111827;
 }
+
 
 .album-item-wrapper.open .album-item-header {
   background: #020617;

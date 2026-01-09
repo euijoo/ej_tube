@@ -1,4 +1,5 @@
-let openAlbumIds = new Set(); // 열린 앨범 ID 저장
+let openAlbumIds = new Set();
+
 // ===== Firebase SDK import & 초기화 =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import {
@@ -347,48 +348,46 @@ function createTrackListItem(track) {
   li.appendChild(metaDiv);
 
   li.addEventListener("click", (e) => {
-  if (
-    e.target === menuBtn ||
-    e.target === renameItem ||
-    e.target === changeCoverItem ||
-    e.target === moveToAlbumItem ||
-    e.target === removeFromAlbumItem ||
-    e.target === removeItem
-  )
-    return;
+    if (
+      e.target === menuBtn ||
+      e.target === renameItem ||
+      e.target === changeCoverItem ||
+      e.target === moveToAlbumItem ||
+      e.target === removeFromAlbumItem ||
+      e.target === removeItem
+    )
+      return;
 
-  if (playClickLock) return;
-  playClickLock = true;
-  setTimeout(() => (playClickLock = false), 400);
+    if (playClickLock) return;
+    playClickLock = true;
+    setTimeout(() => (playClickLock = false), 400);
 
-  // 1. 현재 선택된 트랙이 아니면 → 선택만
-  if (currentTrackId !== track.id) {
-    currentTrackId = track.id;
-    updateNowPlaying(track);
-    renderTrackList();
-    return;
-  }
-
-  // 2. 이미 선택된 트랙이면 → 재생/일시정지 토글
-  if (!player || !window.YT) {
-    // 플레이어가 없으면 새로 재생
-    playVideoById(track.videoId);
-  } else {
-    try {
-      const state = player.getPlayerState();
-      if (state === YT.PlayerState.PLAYING) {
-        player.pauseVideo();
-      } else {
-        player.playVideo();
-      }
-      updateNewMiniPlayer();
-    } catch (err) {
-      // 에러 시 재로드
-      playVideoById(track.videoId);
+    if (currentTrackId !== track.id) {
+      document.querySelectorAll('.track-item.active').forEach(item => {
+        item.classList.remove('active');
+      });
+      li.classList.add('active');
+      currentTrackId = track.id;
+      updateNowPlaying(track);
+      return;
     }
-  }
-});
 
+    if (!player || !window.YT) {
+      playVideoById(track.videoId);
+    } else {
+      try {
+        const state = player.getPlayerState();
+        if (state === YT.PlayerState.PLAYING) {
+          player.pauseVideo();
+        } else {
+          player.playVideo();
+        }
+        updateNewMiniPlayer();
+      } catch (err) {
+        playVideoById(track.videoId);
+      }
+    }
+  });
 
   menuBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -564,12 +563,12 @@ function createAlbumItem(album, albumTracks) {
       wrapper.classList.remove("open");
       ul.style.maxHeight = "0";
       toggleBtn.textContent = "▼";
-      openAlbumIds.delete(album.id); // 닫힐 때 제거
+      openAlbumIds.delete(album.id);
     } else {
       wrapper.classList.add("open");
       ul.style.maxHeight = ul.scrollHeight + "px";
       toggleBtn.textContent = "▲";
-      openAlbumIds.add(album.id); // 열릴 때 추가
+      openAlbumIds.add(album.id);
     }
   };
 
@@ -578,10 +577,11 @@ function createAlbumItem(album, albumTracks) {
     toggle();
   });
 
-  // 🔽 이전에 열려 있었으면 자동으로 열기
   if (openAlbumIds.has(album.id)) {
     wrapper.classList.add("open");
-    ul.style.maxHeight = ul.scrollHeight + "px";
+    setTimeout(() => {
+      ul.style.maxHeight = ul.scrollHeight + "px";
+    }, 0);
     toggleBtn.textContent = "▲";
   }
 
@@ -589,7 +589,6 @@ function createAlbumItem(album, albumTracks) {
   wrapper.appendChild(ul);
   return wrapper;
 }
-
 
 function renderTrackList() {
   trackListEl.innerHTML = "";
@@ -758,7 +757,6 @@ function updateNowPlaying(track) {
     });
   }
 }
-
 async function addTrackFromUrl(url) {
   if (!currentUser) {
     alert("먼저 Google 계정으로 로그인해 주세요.");
@@ -876,11 +874,18 @@ function playTrack(id) {
   const track = tracks.find((t) => t.id === id);
   if (!track) return;
 
+  document.querySelectorAll('.track-item.active').forEach(item => {
+    item.classList.remove('active');
+  });
+
+  const currentLi = document.querySelector(`[data-track-id="${id}"]`);
+  if (currentLi) currentLi.classList.add('active');
+
   currentTrackId = id;
   updateNowPlaying(track);
   playVideoById(track.videoId);
-  renderTrackList();
 }
+
 function playVideoById(videoId) {
   if (!player) {
     player = new YT.Player("player", {
@@ -1021,7 +1026,6 @@ if (miniNextBtn) {
     playTrack(tracks[nextIndex].id);
   });
 }
-
 googleLoginButton.addEventListener("click", async () => {
   try {
     loginError.textContent = "";
@@ -1060,7 +1064,7 @@ onAuthStateChanged(auth, async (user) => {
     renderTrackList();
 
     if (tracks.length > 0) {
-      const first = tracks[0];
+      const first = tracks;
       currentTrackId = first.id;
       updateNowPlaying(first);
     } else {

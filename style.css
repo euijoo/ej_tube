@@ -562,16 +562,18 @@ body {
   0% {
     transform: translateX(0);
   }
-  10% {
+  15% {
     transform: translateX(0); /* 잠깐 멈춤 */
   }
-  90% {
-    transform: translateX(calc(-100% + 160px)); /* 160px 정도만 보이게 이동 (필요시 조절) */
+  85% {
+    /* "텍스트 전체 - 부모 너비" 만큼만 왼쪽으로 이동 */
+    transform: translateX(calc(-1 * (100% - 100vw))); /* 임시 값, 아래 JS에서 정확히 맞춤 */
   }
   100% {
-    transform: translateX(calc(-100% + 160px));
+    transform: translateX(calc(-1 * (100% - 100vw)));
   }
 }
+
 
 
 

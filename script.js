@@ -910,29 +910,55 @@ async function deleteTrack(id) {
   renderTrackList();
 }
 
+
+
+// 실제 재생 중인 곡에 is-playing 클래스 반영
+function updatePlayingIndicator() {
+  // 일단 전부 제거
+  document.querySelectorAll(".track-item.is-playing").forEach((item) => {
+    item.classList.remove("is-playing");
+  });
+
+  if (!currentTrackId) return;
+
+  const currentLi = document.querySelector(
+    `[data-track-id="${currentTrackId}"]`
+  );
+  if (!currentLi) return;
+
+  // 실제로 플레이어에서 재생 중인 videoId와 곡 videoId가 같을 때만 표시
+  const track = tracks.find((t) => t.id === currentTrackId);
+  if (!track) return;
+
+  const playingId = getPlayingVideoIdSafe();
+  if (playingId && playingId === track.videoId) {
+    currentLi.classList.add("is-playing");
+  }
+}
+
 // ▶ playTrack: 다른 곳(자동 다음곡, next 버튼, 처음 선택 등)에서만 호출
 function playTrack(id) {
   const track = tracks.find((t) => t.id === id);
   if (!track) return;
 
-  // active / is-playing 제거
+  // active만 관리
   document.querySelectorAll(".track-item.active").forEach((item) => {
     item.classList.remove("active");
-  });
-  document.querySelectorAll(".track-item.is-playing").forEach((item) => {
-    item.classList.remove("is-playing");
   });
 
   const currentLi = document.querySelector(`[data-track-id="${id}"]`);
   if (currentLi) {
     currentLi.classList.add("active");
-    currentLi.classList.add("is-playing"); // 실제 재생 중 표시
   }
 
   currentTrackId = id;
   updateNowPlaying(track);
   playVideoById(track.videoId);
+
+  // 실제 재생 시작 후 표시 갱신
+  setTimeout(updatePlayingIndicator, 300);
 }
+
 function playVideoById(videoId) {
   if (!player) {
     player = new YT.Player("player", {

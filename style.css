@@ -414,7 +414,7 @@ body {
 /* ===== 앨범 카드 (아코디언) ===== */
 
 .album-item-wrapper {
-  border-top: 1px solid #111827;
+  border-top: none;
 }
 
 .album-item-header {
@@ -472,7 +472,7 @@ body {
   padding: 0;
   overflow: hidden;
   transition: max-height 0.2s ease;
-  border-bottom: 1px solid #111827;
+  border-bottom: none;
 }
 
 .album-item-wrapper.open .album-item-header {

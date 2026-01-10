@@ -769,15 +769,21 @@ function updateNowPlaying(track) {
     miniArtistNew.textContent = track.channel;
   }
 
-  // === 제목이 길면 슬라이드 애니메이션 켜기 ===
+    // === 제목이 길면 슬라이드 애니메이션 켜기 ===
   if (miniTitleNew) {
     miniTitleNew.classList.remove("marquee-on");
+    miniTitleNew.style.removeProperty("--mini-title-offset");
 
     requestAnimationFrame(() => {
-      const parentWidth = miniTitleNew.parentElement
-        ? miniTitleNew.parentElement.clientWidth
-        : 0;
-      if (miniTitleNew.scrollWidth > parentWidth + 8) {
+      const parent = miniTitleNew.parentElement;
+      if (!parent) return;
+      const parentWidth = parent.clientWidth;
+      const titleWidth = miniTitleNew.scrollWidth;
+
+      // 텍스트가 영역보다 길 때만 슬라이드
+      if (titleWidth > parentWidth + 8) {
+        const offset = titleWidth - parentWidth; // 왼쪽으로 빼줄 거리
+        miniTitleNew.style.setProperty("--mini-title-offset", `${offset}px`);
         miniTitleNew.classList.add("marquee-on");
       }
     });

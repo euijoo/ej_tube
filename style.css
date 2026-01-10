@@ -545,29 +545,17 @@ body {
   text-overflow: ellipsis;
 }
 
-/* 긴 제목을 부드럽게 슬라이드 */
-.mini-title-new-wrapper {
-  position: relative;
-  overflow: hidden;
-}
-
-/* JS에서 길이에 따라 .marquee-on 클래스를 붙이면 슬라이드 */
+/* 긴 제목 슬라이드용 클래스 */
 .mini-title-new.marquee-on {
   display: inline-block;
   white-space: nowrap;
+  /* 말줄임 제거 */
+  text-overflow: clip;
+  overflow: visible;
+  /* 부모가 overflow:hidden 이라 바깥은 안 보임 */
   animation: mini-title-marquee 12s linear infinite;
 }
 
-/* 기본 상태는 한 줄 말줄임 (지금과 동일) */
-.mini-title-new {
-  font-size: 18px;
-  font-weight: 600;
-  color: #000;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* 슬라이드 키프레임 */
 @keyframes mini-title-marquee {

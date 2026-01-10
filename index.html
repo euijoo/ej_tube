@@ -102,31 +102,33 @@
       </footer>
 
       <!-- 새 미니 플레이어 (Figma 디자인) -->
-      <footer class="mini-player-new">
-        <img id="miniThumbNew" class="mini-cover-new" src="" alt="cover">
-        
-        <div class="mini-center">
-          <div class="mini-title-new" id="miniTitleNew">제목</div>
-          <div class="mini-artist-new" id="miniArtistNew">아티스트</div>
-          
-          <div class="mini-progress-container">
-            <span class="mini-time-current" id="miniCurrentTime">0:00</span>
-            <div class="mini-progress-bar" id="miniProgressBar">
-              <div class="mini-progress-fill" id="miniProgressFill"></div>
-            </div>
-            <span class="mini-time-total" id="miniTotalTime">0:00</span>
-          </div>
-        </div>
-        
-        <div class="mini-controls">
-          <button id="miniPlayPauseBtnNew" class="mini-btn-play" type="button" aria-label="재생/일시정지">
-            <span id="miniPlayPauseIcon">❚❚</span>
-          </button>
-          <button id="miniNextBtn" class="mini-btn-next" type="button" aria-label="다음곡">▶|</button>
-        </div>
-      </footer>
+<footer class="mini-player-new">
+  <img id="miniThumbNew" class="mini-cover-new" src="" alt="cover">
+
+  <div class="mini-center">
+    <!-- 제목을 뷰포트 래퍼로 감싸기 -->
+    <div class="mini-title-wrapper">
+      <div class="mini-title-new" id="miniTitleNew">제목</div>
+    </div>
+    <div class="mini-artist-new" id="miniArtistNew">아티스트</div>
+
+    <div class="mini-progress-container">
+      <span class="mini-time-current" id="miniCurrentTime">0:00</span>
+      <div class="mini-progress-bar" id="miniProgressBar">
+        <div class="mini-progress-fill" id="miniProgressFill"></div>
+      </div>
+      <span class="mini-time-total" id="miniTotalTime">0:00</span>
     </div>
   </div>
+
+  <div class="mini-controls">
+    <button id="miniPlayPauseBtnNew" class="mini-btn-play" type="button" aria-label="재생/일시정지">
+      <span id="miniPlayPauseIcon">❚❚</span>
+    </button>
+    <button id="miniNextBtn" class="mini-btn-next" type="button" aria-label="다음곡">▶|</button>
+  </div>
+</footer>
+
 
   <!-- YouTube IFrame API -->
   <script src="https://www.youtube.com/iframe_api"></script>

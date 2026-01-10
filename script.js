@@ -721,6 +721,7 @@ function resetNowPlayingUI() {
 function updateNowPlaying(track) {
   const coverUrl = track.customThumbnail || track.thumbnail;
 
+  // 기본 텍스트 / 커버 변경
   titleEl.textContent = track.title;
   artistEl.textContent = track.channel;
   if (coverUrl) {
@@ -732,6 +733,10 @@ function updateNowPlaying(track) {
   const miniThumbNew = document.getElementById("miniThumbNew");
   const miniTitleNew = document.getElementById("miniTitleNew");
   const miniArtistNew = document.getElementById("miniArtistNew");
+  const playPauseIcon = document.getElementById("miniPlayPauseIcon");
+  const currentEl = document.getElementById("miniCurrentTime");
+  const totalEl = document.getElementById("miniTotalTime");
+  const fillEl = document.getElementById("miniProgressFill");
 
   if (miniThumbNew && miniTitleNew && miniArtistNew) {
     if (coverUrl) {
@@ -743,6 +748,39 @@ function updateNowPlaying(track) {
     miniArtistNew.textContent = track.channel;
   }
 
+  // ▶ 여기서 "선택 곡"과 "실제 재생 곡"이 같은지 확인해서
+  //   다르면 미리보기 모드(00:00 + ▶)로 초기화
+  const playingId = getPlayingVideoIdSafe();
+  const isPreview = !playingId || playingId !== track.videoId;
+
+  if (isPreview) {
+    // 실제로는 다른 곡이 재생 중이거나, 아직 재생 전 → 미리보기 모드
+    if (currentEl) currentEl.textContent = "00:00";
+    if (totalEl) totalEl.textContent = "00:00";
+    if (fillEl) fillEl.style.width = "0%";
+    if (playPauseIcon) playPauseIcon.textContent = "▶";
+  } else {
+    // 선택한 곡이 실제 재생 곡이면, 즉시 현재 진행 상태를 한 번 업데이트
+    try {
+      const currentTime = player.getCurrentTime();
+      const duration = player.getDuration();
+      if (currentTime && duration) {
+        if (currentEl) currentEl.textContent = formatTime(currentTime);
+        if (totalEl) totalEl.textContent = formatTime(duration);
+        if (fillEl) {
+          const percent = (currentTime / duration) * 100;
+          fillEl.style.width = percent + "%";
+        }
+      }
+      if (playPauseIcon) {
+        const state = player.getPlayerState();
+        playPauseIcon.textContent =
+          state === YT.PlayerState.PLAYING ? "❚❚" : "▶";
+      }
+    } catch (e) {}
+  }
+
+  // Media Session 메타데이터는 선택 곡 기준으로 유지
   if ("mediaSession" in navigator) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: track.title,
@@ -756,6 +794,7 @@ function updateNowPlaying(track) {
     });
   }
 }
+
 
 // ========= 트랙 추가/삭제 =========
 async function addTrackFromUrl(url) {
@@ -939,6 +978,30 @@ function playVideoById(videoId) {
   }
 }
 
+// 현재 YouTube 플레이어에서 재생 중인 videoId 얻기
+function getPlayingVideoIdSafe() {
+  if (!player || !window.YT) return null;
+
+  try {
+    // getVideoData 가 가장 안정적
+    const data = player.getVideoData && player.getVideoData();
+    if (data && data.video_id) return data.video_id;
+
+    // fallback: getVideoUrl 사용
+    const url = player.getVideoUrl && player.getVideoUrl();
+    if (!url) return null;
+    const urlObj = new URL(url);
+    return (
+      urlObj.searchParams.get("v") ||
+      urlObj.pathname.split("/").pop() ||
+      null
+    );
+  } catch (e) {
+    return null;
+  }
+}
+
+
 function formatTime(sec) {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
@@ -947,33 +1010,49 @@ function formatTime(sec) {
 
 function updateNewMiniPlayer() {
   const playPauseIcon = document.getElementById("miniPlayPauseIcon");
+  const currentEl = document.getElementById("miniCurrentTime");
+  const totalEl = document.getElementById("miniTotalTime");
+  const fillEl = document.getElementById("miniProgressFill");
 
-  // 플레이어가 아직 없으면 항상 ▶ 아이콘 유지
+  // 플레이어가 아직 없으면 항상 ▶ + 00:00
   if (!player || !window.YT) {
+    if (playPauseIcon) playPauseIcon.textContent = "▶";
+    if (currentEl) currentEl.textContent = "00:00";
+    if (totalEl) totalEl.textContent = "00:00";
+    if (fillEl) fillEl.style.width = "0%";
+    return;
+  }
+
+  // 현재 선택된 곡과 실제 재생 중인 곡 비교
+  const playingId = getPlayingVideoIdSafe();
+  const currentTrack = tracks.find((t) => t.id === currentTrackId) || null;
+  const isPreview =
+    !currentTrack || !playingId || playingId !== currentTrack.videoId;
+
+  if (isPreview) {
+    // 선택한 곡이 실제 재생 곡과 다르면 → 미리보기 상태 유지
+    if (currentEl) currentEl.textContent = "00:00";
+    if (totalEl) totalEl.textContent = "00:00";
+    if (fillEl) fillEl.style.width = "0%";
     if (playPauseIcon) playPauseIcon.textContent = "▶";
     return;
   }
 
-  if (playPauseIcon) {
-    try {
-      const state = player.getPlayerState();
+  // 여기부터는 "선택 곡 === 실제 재생 곡" 인 경우
+  try {
+    const state = player.getPlayerState();
+    if (playPauseIcon) {
       if (state === YT.PlayerState.PLAYING) {
         playPauseIcon.textContent = "❚❚";
       } else {
         playPauseIcon.textContent = "▶";
       }
-    } catch (e) {}
-  }
+    }
 
-  try {
     const currentTime = player.getCurrentTime();
     const duration = player.getDuration();
 
     if (currentTime && duration) {
-      const currentEl = document.getElementById("miniCurrentTime");
-      const totalEl = document.getElementById("miniTotalTime");
-      const fillEl = document.getElementById("miniProgressFill");
-
       if (currentEl) currentEl.textContent = formatTime(currentTime);
       if (totalEl) totalEl.textContent = formatTime(duration);
 
@@ -982,8 +1061,12 @@ function updateNewMiniPlayer() {
         fillEl.style.width = percent + "%";
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    // 에러가 나면 최소한 아이콘만 재생/일시정지 정도로 맞춰둔다
+    if (playPauseIcon) playPauseIcon.textContent = "▶";
+  }
 }
+
 
 
 setInterval(updateNewMiniPlayer, 1000);

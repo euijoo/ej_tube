@@ -237,7 +237,7 @@ body {
   gap: 10px;
   background: #050509;
   /* 이 줄을 지우거나 주석 처리 */
-  /* border-bottom: 1px solid #111827; */
+  border-bottom: none; 
   cursor: pointer;
   transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
 }

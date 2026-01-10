@@ -535,6 +535,7 @@ body {
   min-width: 0;
 }
 
+/* 기본 제목 */
 .mini-title-new {
   font-size: 18px;
   font-weight: 600;
@@ -554,6 +555,13 @@ body {
   overflow: visible;
   /* 부모가 overflow:hidden 이라 바깥은 안 보임 */
   animation: mini-title-marquee 12s linear infinite;
+}
+
+/* 제목이 보여질 뷰포트 */
+.mini-title-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden; /* 이 박스 밖의 제목은 안 보이게 */
 }
 
 

@@ -62,6 +62,7 @@ let coverSheetInput = null;
 let coverSheetSaveBtn = null;
 let coverSheetCancelBtn = null;
 
+// ========= 유틸 =========
 function extractVideoId(url) {
   try {
     const u = new URL(url);
@@ -141,6 +142,7 @@ async function fetchPlaylistItems(playlistId, maxTotal = 50) {
   return videoIds;
 }
 
+// ========= YouTube Iframe API =========
 function onYouTubeIframeAPIReady() {}
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
@@ -167,6 +169,7 @@ function onPlayerStateChange(event) {
     }
   }
 
+  // 자동 다음 곡 재생은 유지
   if (state === YT.PlayerState.ENDED) {
     if (!currentTrackId || tracks.length === 0) return;
     const currentIndex = tracks.findIndex((t) => t.id === currentTrackId);
@@ -177,6 +180,7 @@ function onPlayerStateChange(event) {
   }
 }
 
+// ========= Firestore 헬퍼 =========
 function getTracksCollectionRef(uid) {
   return collection(db, "users", uid, "tracks");
 }
@@ -270,6 +274,7 @@ async function updateTrackCustomThumbnailInFirestore(id, url) {
   await updateDoc(trackRef, { customThumbnail: url });
 }
 
+// ========= 트랙/앨범 분리 & 리스트 렌더 =========
 function splitTracksByAlbum() {
   const mainTracks = [];
   const albumTrackMap = {};
@@ -283,6 +288,8 @@ function splitTracksByAlbum() {
   });
   return { mainTracks, albumTrackMap };
 }
+
+// B안: 리스트 클릭은 선택만, 재생은 미니 플레이어 버튼으로만
 function createTrackListItem(track) {
   const li = document.createElement("li");
   li.className = "track-item";
@@ -347,6 +354,7 @@ function createTrackListItem(track) {
   li.appendChild(textBox);
   li.appendChild(metaDiv);
 
+  // ▶ 리스트 클릭: 선택만, 재생 없음
   li.addEventListener("click", (e) => {
     if (
       e.target === menuBtn ||
@@ -362,33 +370,17 @@ function createTrackListItem(track) {
     playClickLock = true;
     setTimeout(() => (playClickLock = false), 400);
 
-    if (currentTrackId !== track.id) {
-      document.querySelectorAll('.track-item.active').forEach(item => {
-        item.classList.remove('active');
-      });
-      li.classList.add('active');
-      currentTrackId = track.id;
-      updateNowPlaying(track);
-      return;
-    }
-
-    if (!player || !window.YT) {
-      playVideoById(track.videoId);
-    } else {
-      try {
-        const state = player.getPlayerState();
-        if (state === YT.PlayerState.PLAYING) {
-          player.pauseVideo();
-        } else {
-          player.playVideo();
-        }
-        updateNewMiniPlayer();
-      } catch (err) {
-        playVideoById(track.videoId);
-      }
-    }
+    // 항상 "선택"만 수행
+    document.querySelectorAll(".track-item.active").forEach((item) => {
+      item.classList.remove("active");
+    });
+    li.classList.add("active");
+    currentTrackId = track.id;
+    updateNowPlaying(track);
+    // 재생/일시정지는 미니 플레이어 버튼에서만 제어
   });
 
+  // ===== 메뉴 버튼들 =====
   menuBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     const isOpen = menu.classList.contains("open");
@@ -757,6 +749,8 @@ function updateNowPlaying(track) {
     });
   }
 }
+
+// ========= 트랙 추가/삭제 =========
 async function addTrackFromUrl(url) {
   if (!currentUser) {
     alert("먼저 Google 계정으로 로그인해 주세요.");
@@ -870,22 +864,22 @@ async function deleteTrack(id) {
   renderTrackList();
 }
 
+// ▶ playTrack: 다른 곳(자동 다음곡, next 버튼, 처음 선택 등)에서만 호출
 function playTrack(id) {
   const track = tracks.find((t) => t.id === id);
   if (!track) return;
 
-  document.querySelectorAll('.track-item.active').forEach(item => {
-    item.classList.remove('active');
+  document.querySelectorAll(".track-item.active").forEach((item) => {
+    item.classList.remove("active");
   });
 
   const currentLi = document.querySelector(`[data-track-id="${id}"]`);
-  if (currentLi) currentLi.classList.add('active');
+  if (currentLi) currentLi.classList.add("active");
 
   currentTrackId = id;
   updateNowPlaying(track);
   playVideoById(track.videoId);
 }
-
 function playVideoById(videoId) {
   if (!player) {
     player = new YT.Player("player", {
@@ -981,6 +975,7 @@ function updateNewMiniPlayer() {
 
 setInterval(updateNewMiniPlayer, 1000);
 
+// 미니 플레이어 프로그레스바 클릭 seek
 const progressBar = document.getElementById("miniProgressBar");
 if (progressBar) {
   progressBar.addEventListener("click", (e) => {
@@ -998,10 +993,18 @@ if (progressBar) {
   });
 }
 
+// ▶ B안 핵심: 재생/일시정지는 이 버튼으로만
 const playPauseBtnNew = document.getElementById("miniPlayPauseBtnNew");
 if (playPauseBtnNew) {
   playPauseBtnNew.addEventListener("click", () => {
-    if (!player || !window.YT) return;
+    if (!player || !window.YT) {
+      // 아직 플레이어가 없고 선택된 트랙이 있다면 그 트랙 재생 시작
+      if (!currentTrackId) return;
+      const track = tracks.find((t) => t.id === currentTrackId);
+      if (!track) return;
+      playTrack(track.id);
+      return;
+    }
 
     try {
       const state = player.getPlayerState();
@@ -1015,6 +1018,7 @@ if (playPauseBtnNew) {
   });
 }
 
+// 다음 곡 버튼
 const miniNextBtn = document.getElementById("miniNextBtn");
 if (miniNextBtn) {
   miniNextBtn.addEventListener("click", () => {
@@ -1026,6 +1030,8 @@ if (miniNextBtn) {
     playTrack(tracks[nextIndex].id);
   });
 }
+
+// ========= 로그인/로그아웃 & 초기 로딩 =========
 googleLoginButton.addEventListener("click", async () => {
   try {
     loginError.textContent = "";
@@ -1064,14 +1070,14 @@ onAuthStateChanged(auth, async (user) => {
     renderTrackList();
 
     if (tracks.length > 0) {
-  // 랜덤 인덱스 선택
-  const randomIndex = Math.floor(Math.random() * tracks.length);
-  const randomTrack = tracks[randomIndex];
-  currentTrackId = randomTrack.id;
-  updateNowPlaying(randomTrack);
-} else {
-  resetNowPlayingUI();
-}
+      // 랜덤 트랙 선택 (선택만, 자동 재생 없음)
+      const randomIndex = Math.floor(Math.random() * tracks.length);
+      const randomTrack = tracks[randomIndex];
+      currentTrackId = randomTrack.id;
+      updateNowPlaying(randomTrack);
+    } else {
+      resetNowPlayingUI();
+    }
   } else {
     currentUser = null;
     tracks = [];
@@ -1085,6 +1091,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+// ========= 입력/버튼 핸들러 =========
 addButton.addEventListener("click", () => {
   const url = videoUrlInput.value.trim();
   if (!url) return;
@@ -1110,6 +1117,7 @@ clearListButton.addEventListener("click", async () => {
   resetNowPlayingUI();
 });
 
+// ========= 커버 시트 =========
 function ensureCoverSheet() {
   if (coverSheetBackdrop) return;
 
@@ -1125,7 +1133,8 @@ function ensureCoverSheet() {
 
   const desc = document.createElement("p");
   desc.className = "cover-sheet-desc";
-  desc.textContent = "이미지 주소를 직접 넣어서 커버를 바꿀 수 있어요. 비워서 저장하면 원래 썸네일로 돌아갑니다.";
+  desc.textContent =
+    "이미지 주소를 직접 넣어서 커버를 바꿀 수 있어요. 비워서 저장하면 원래 썸네일로 돌아갑니다.";
 
   coverSheetInput = document.createElement("input");
   coverSheetInput.type = "text";
@@ -1224,23 +1233,36 @@ if (changeCoverBtn) {
   });
 }
 
+// ========= iOS 제스처 방지 =========
 document.addEventListener("gesturestart", function (e) {
   e.preventDefault();
 });
 
 if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-  document.addEventListener("touchstart", function (e) {
-    if (e.touches.length > 1) e.preventDefault();
-  }, { passive: false });
+  document.addEventListener(
+    "touchstart",
+    function (e) {
+      if (e.touches.length > 1) e.preventDefault();
+    },
+    { passive: false }
+  );
 
-  document.addEventListener("touchmove", function (e) {
-    if (e.scale && e.scale !== 1) e.preventDefault();
-  }, { passive: false });
+  document.addEventListener(
+    "touchmove",
+    function (e) {
+      if (e.scale && e.scale !== 1) e.preventDefault();
+    },
+    { passive: false }
+  );
 
   let lastTouchEnd = 0;
-  document.addEventListener("touchend", function (e) {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) e.preventDefault();
-    lastTouchEnd = now;
-  }, { passive: false });
+  document.addEventListener(
+    "touchend",
+    function (e) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    },
+    { passive: false }
+  );
 }

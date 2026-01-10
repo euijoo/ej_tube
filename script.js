@@ -185,7 +185,11 @@ function onPlayerStateChange(event) {
     if (nextIndex >= tracks.length) return;
     playTrack(tracks[nextIndex].id);
   }
+
+  // 재생 상태가 바뀔 때마다 is-playing 재계산
+  updatePlayingIndicator();
 }
+
 
 // ========= Firestore 헬퍼 =========
 function getTracksCollectionRef(uid) {

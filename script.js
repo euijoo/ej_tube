@@ -147,11 +147,18 @@ function onYouTubeIframeAPIReady() {}
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
 function onPlayerReady() {
+  // 플레이어가 준비된 직후에는 아직 재생 전이므로 ▶ 로 초기화
+  const playPauseIcon = document.getElementById("miniPlayPauseIcon");
+  if (playPauseIcon) {
+    playPauseIcon.textContent = "▶";
+  }
+
   updateNewMiniPlayer();
   if ("mediaSession" in navigator) {
     navigator.mediaSession.playbackState = "none";
   }
 }
+
 
 function onPlayerStateChange(event) {
   if (!window.YT) return;
@@ -939,9 +946,14 @@ function formatTime(sec) {
 }
 
 function updateNewMiniPlayer() {
-  if (!player || !window.YT) return;
-
   const playPauseIcon = document.getElementById("miniPlayPauseIcon");
+
+  // 플레이어가 아직 없으면 항상 ▶ 아이콘 유지
+  if (!player || !window.YT) {
+    if (playPauseIcon) playPauseIcon.textContent = "▶";
+    return;
+  }
+
   if (playPauseIcon) {
     try {
       const state = player.getPlayerState();
@@ -972,6 +984,7 @@ function updateNewMiniPlayer() {
     }
   } catch (e) {}
 }
+
 
 setInterval(updateNewMiniPlayer, 1000);
 

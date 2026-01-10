@@ -770,25 +770,27 @@ function updateNowPlaying(track) {
   }
 
     // === 제목이 길면 슬라이드 애니메이션 켜기 ===
-  if (miniTitleNew) {
-    miniTitleNew.classList.remove("marquee-on");
-    miniTitleNew.style.removeProperty("--mini-title-offset");
+if (miniTitleNew) {
+  miniTitleNew.classList.remove("marquee-on");
+  miniTitleNew.style.removeProperty("--mini-title-offset");
 
-    requestAnimationFrame(() => {
-      const parent = miniTitleNew.parentElement;
-      if (!parent) return;
-      const parentWidth = parent.clientWidth;
-      const titleWidth = miniTitleNew.scrollWidth;
+  requestAnimationFrame(() => {
+    const wrapper = miniTitleNew.parentElement; // .mini-title-wrapper
+    if (!wrapper) return;
 
-      // 텍스트가 영역보다 길 때만 슬라이드
-      if (titleWidth > parentWidth + 8) {
-        const offset = titleWidth - parentWidth; // 왼쪽으로 빼줄 거리
-        miniTitleNew.style.setProperty("--mini-title-offset", `${offset}px`);
-        miniTitleNew.classList.add("marquee-on");
-      }
-    });
-  }
-  // === 슬라이드 설정 끝 ===
+    const parentWidth = wrapper.clientWidth;      // 제목 뷰포트 너비
+    const titleWidth = miniTitleNew.scrollWidth;  // 실제 텍스트 너비
+
+    // 텍스트가 영역보다 길 때만 슬라이드
+    if (titleWidth > parentWidth + 8) {
+      const offset = titleWidth - parentWidth; // 이만큼만 왼쪽으로 이동
+      miniTitleNew.style.setProperty("--mini-title-offset", `${offset}px`);
+      miniTitleNew.classList.add("marquee-on");
+    }
+  });
+}
+// === 슬라이드 설정 끝 ===
+
 
   // ▶ 여기서 "선택 곡"과 "실제 재생 곡"이 같은지 확인해서
   //   다르면 미리보기 모드(00:00 + ▶)로 초기화

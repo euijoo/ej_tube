@@ -393,17 +393,27 @@ function createTrackListItem(track) {
 
   // ===== 메뉴 버튼들 =====
   menuBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const isOpen = menu.classList.contains("open");
-    closeAllTrackMenus();
-    if (!isOpen) {
-      menu.classList.add("open");
-      const rect = menu.getBoundingClientRect();
-      if (window.innerHeight - rect.bottom < 140 && rect.top > window.innerHeight - rect.bottom) {
-        menu.classList.add("open-up");
-      }
+  e.stopPropagation();
+
+  const isOpen = menu.classList.contains("open");
+  closeAllTrackMenus();
+
+  if (!isOpen) {
+    menu.classList.remove("open-up");
+    menu.classList.add("open");
+
+    const rect = menu.getBoundingClientRect();
+    const menuHeight = rect.height || 180; // 대략 5개 메뉴 높이
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // 아래 공간이 부족하고, 위쪽이 더 넓으면 위로 띄우기
+    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+      menu.classList.add("open-up");
     }
-  });
+  }
+});
+
 
   renameItem.addEventListener("click", (e) => {
     e.stopPropagation();

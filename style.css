@@ -252,6 +252,40 @@ body {
   background: #111827;
 }
 
+/* 트랙 아이템 기본/호버/선택 상태 강화 */
+.track-item {
+  transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+}
+
+.track-item:hover {
+  background: #0b1120; /* 살짝 밝은 남색 톤 */
+  transform: translateY(-1px);
+}
+
+.track-item.active {
+  background: #111827;
+  box-shadow: 0 0 0 1px #10b98133;
+}
+
+/* 실제 재생 중인 트랙 표시용 (좌측 작은 점) */
+.track-item.is-playing {
+  position: relative;
+}
+
+.track-item.is-playing::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #10b981;
+}
+
+
+
 .track-item-thumb {
   width: 40px;
   height: 40px;

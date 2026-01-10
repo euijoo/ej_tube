@@ -400,7 +400,7 @@ body {
   font-size: 14px;
   color: #9ca3af;
   padding: 8px 0;
-  border-bottom: 1px solid #111827;
+  border-bottom: none;
   margin-bottom: 8px;
 }
 
@@ -676,7 +676,7 @@ body {
   max-width: 480px;
   background: #020617;
   border-radius: 16px 16px 0 0;
-  border-top: 1px solid #111827;
+  border-top: none;
   padding: 12px 16px 16px;
   box-sizing: border-box;
 }

@@ -400,19 +400,25 @@ function createTrackListItem(track) {
 
   if (!isOpen) {
     menu.classList.remove("open-up");
+
+    // 높이 측정을 위해 잠깐 보이게
+    menu.style.visibility = "hidden";
     menu.classList.add("open");
 
     const rect = menu.getBoundingClientRect();
-    const menuHeight = rect.height || 180; // 대략 5개 메뉴 높이
+    const menuHeight = rect.height || 180;
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
 
-    // 아래 공간이 부족하고, 위쪽이 더 넓으면 위로 띄우기
     if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
       menu.classList.add("open-up");
     }
+
+    // 다시 보이도록
+    menu.style.visibility = "";
   }
 });
+
 
 
   renameItem.addEventListener("click", (e) => {

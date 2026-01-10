@@ -1175,7 +1175,7 @@ if (playPauseBtnNew) {
     const track = tracks.find((t) => t.id === currentTrackId);
     if (!track) return;
 
-    // 1) 플레이어가 아직 없으면 → 현재 선택된 곡으로 새로 재생 시작 (한 번만 눌러도)
+    // 1) 플레이어가 아직 없으면 → 현재 선택된 곡으로 새로 재생 시작 (첫 클릭)
     if (!player || !window.YT) {
       playTrack(track.id);
       return;
@@ -1200,11 +1200,12 @@ if (playPauseBtnNew) {
       }
       updateNewMiniPlayer();
     } catch (e) {
-      // 예외 시에도 선택된 곡 기준으로 다시 재생 (여기서도 한 번만 눌러도 바로 시도)
+      // 예외 시에도 선택된 곡 기준으로 다시 재생 시도
       playTrack(track.id);
     }
   });
 }
+
 
 
 

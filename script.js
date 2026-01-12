@@ -1475,15 +1475,24 @@ onAuthStateChanged(auth, async (user) => {
   console.log("auth state changed:", user);
 
   if (user) {
-    currentUser = user;
+    try {
+      // ✅ 프로필 정보 강제 새로고침
+      await user.reload();
+    } catch (e) {
+      console.warn("user.reload() 실패:", e);
+    }
 
-    const email = user.email || "";
+    // reload 이후 최신 객체 다시 가져오기
+    const freshUser = auth.currentUser || user;
+    currentUser = freshUser;
+
+    const email = freshUser.email || "";
     const nick = email.includes("@") ? email.split("@")[0] : email;
     if (userNickEl) userNickEl.textContent = nick;
 
     if (userAvatarEl) {
-      if (user.photoURL) {
-        userAvatarEl.src = user.photoURL;
+      if (freshUser.photoURL) {
+        userAvatarEl.src = freshUser.photoURL;
       } else {
         userAvatarEl.src = "";
       }
@@ -1518,6 +1527,7 @@ onAuthStateChanged(auth, async (user) => {
     loginError.textContent = "";
   }
 });
+
 
 // ========= 입력/버튼 핸들러 =========
 addButton.addEventListener("click", () => {

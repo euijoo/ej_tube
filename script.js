@@ -1166,7 +1166,6 @@ function updateNowPlaying(track) {
   const coverUrl = track.customThumbnail || track.thumbnail;
 
   titleEl.textContent = track.title;
-  artistEl.textContent = track.channel;
   if (coverUrl) {
     thumbnailEl.src = coverUrl;
   } else {

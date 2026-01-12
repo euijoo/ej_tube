@@ -6,12 +6,12 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: #050509; /* 더 진한 블랙톤 */
+  background: #050509;
 }
 
 body {
   background: #050509;
-  color: #f9fafb; /* 기본 텍스트 더 밝게 */
+  color: #f9fafb;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -28,7 +28,6 @@ body {
   padding: 0 16px 112px;
   box-sizing: border-box;
 }
-
 
 /* ===== 로그인 화면 ===== */
 
@@ -67,6 +66,8 @@ body {
 .main-screen.hidden {
   display: none;
 }
+
+/* ===== 상단 바 ===== */
 
 .top-bar {
   width: 100%;
@@ -118,7 +119,6 @@ body {
   font-weight: 600;
   color: #f9fafb;
 }
-
 
 /* ===== 상단 커버 섹션 ===== */
 
@@ -204,7 +204,6 @@ body {
   color: #e5e7eb;
 }
 
-
 .track-title-lg {
   font-size: 20px;
   margin: 0 0 4px;
@@ -216,13 +215,6 @@ body {
   color: #9ca3af;
   margin: 0 0 4px;
 }
-
-.user-email {
-  font-size: 12px;
-  color: #6b7280;
-  margin: 0;
-}
-
 
 /* ===== 플레이리스트 영역 ===== */
 
@@ -261,7 +253,7 @@ body {
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid #374151;
-  background: #050509;  /* 바탕과 맞추기 */
+  background: #050509;
   color: #f9fafb;
   font-size: 14px;
 }
@@ -280,7 +272,7 @@ body {
 }
 
 .btn.primary {
-  background: #ffffff;   /* 큰 Play 버튼 느낌 */
+  background: #ffffff;
   color: #111827;
 }
 
@@ -299,7 +291,6 @@ body {
   background: #1f2937;
 }
 
-
 /* ===== 트랙 리스트 ===== */
 
 #trackList {
@@ -315,7 +306,6 @@ body {
   padding: 8px 0;
   gap: 10px;
   background: #050509;
-  /* 이 줄을 지우거나 주석 처리 */
   border-bottom: none;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
@@ -331,7 +321,6 @@ body {
   box-shadow: 0 0 0 1px #10b98133;
 }
 
-/* 실제 재생 중인 트랙 표시용 (좌측 작은 점) */
 .track-item.is-playing {
   position: relative;
 }
@@ -373,17 +362,12 @@ body {
   text-overflow: ellipsis;
 }
 
-.track-item-artist {
-  display: none;
-}
-
 .track-item-meta {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
-
 
 /* ===== 트랙 메뉴 ===== */
 
@@ -410,7 +394,7 @@ body {
   position: absolute;
   right: 0;
   top: 50%;
-  transform: translateY(-50%); /* 버튼 옆 중앙에 뜨게 */
+  transform: translateY(-50%);
   background: rgba(15, 23, 42, 0.98);
   border-radius: 12px;
   min-width: 180px;
@@ -457,17 +441,6 @@ body {
   background: #7f1d1d;
 }
 
-.track-title-input {
-  font-size: 14px;
-  color: #e5e7eb;
-  background: transparent;
-  border: 1px solid #374151;
-  border-radius: 4px;
-  padding: 2px 4px;
-  outline: none;
-}
-
-
 /* ===== 앨범 섹션 ===== */
 
 .album-section {
@@ -489,7 +462,6 @@ body {
   padding: 0;
 }
 
-
 /* ===== 앨범 카드 (아코디언) ===== */
 
 .album-item-wrapper {
@@ -502,7 +474,7 @@ body {
   gap: 10px;
   padding: 8px 0;
   cursor: pointer;
-  background: #050509;          /* 리스트 카드와 같은 다크 배경 */
+  background: #050509;
 }
 
 .album-item-thumb {
@@ -535,6 +507,85 @@ body {
   color: #9ca3af;
 }
 
+/* 헤더 오른쪽: 앨범 메뉴 + 토글 */
+.album-header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 앨범용 ... 버튼 */
+.album-menu-btn {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 18px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.album-menu-btn:hover {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+/* 앨범 메뉴 */
+.album-menu {
+  position: absolute;
+  right: 36px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 12px;
+  min-width: 160px;
+  padding: 6px 0;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-out;
+  z-index: 30;
+}
+
+.album-menu.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.album-menu.open.open-up {
+  top: auto;
+  bottom: 100%;
+}
+
+.album-menu-item {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  display: block;
+}
+
+.album-menu-item:hover {
+  background: #1f2937;
+}
+
+.album-menu-item.danger {
+  color: #fca5a5;
+}
+
+.album-menu-item.danger:hover {
+  background: #7f1d1d;
+}
+
 .album-item-toggle {
   border: none;
   background: transparent;
@@ -557,7 +608,67 @@ body {
 .album-item-wrapper.open .album-item-header {
   background: #020617;
 }
+/* ===== Move to album 모달 ===== */
 
+.album-current-info {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 0 0 8px;
+}
+
+.album-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.album-select-btn {
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: #020617;
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.album-select-btn:hover {
+  background: #111827;
+}
+
+.album-new-box {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.album-new-input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 12px;
+}
+
+.album-new-input::placeholder {
+  color: #4b5563;
+}
+
+.album-new-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  background: #10b981;
+  color: #020617;
+  cursor: pointer;
+}
 
 /* ===== 기존 미니 플레이어 (숨김) ===== */
 
@@ -565,8 +676,7 @@ body {
   display: none !important;
 }
 
-
-/* ===== 새 미니 플레이어 (Figma 디자인, 다크 톤) ===== */
+/* ===== 새 미니 플레이어 ===== */
 
 .mini-player-new {
   position: fixed;
@@ -601,14 +711,12 @@ body {
   min-width: 0;
 }
 
-/* 제목이 보여질 뷰포트 */
 .mini-title-wrapper {
   position: relative;
   width: 100%;
-  overflow: hidden; /* 이 박스 밖의 제목은 안 보이게 */
+  overflow: hidden;
 }
 
-/* 기본 제목 */
 .mini-title-new {
   font-size: 18px;
   font-weight: 600;
@@ -619,7 +727,6 @@ body {
   text-overflow: ellipsis;
 }
 
-/* 긴 제목 슬라이드용 클래스 */
 .mini-title-new.marquee-on {
   display: inline-block;
   white-space: nowrap;
@@ -628,13 +735,12 @@ body {
   animation: mini-title-marquee 12s linear infinite;
 }
 
-/* 슬라이드 키프레임 */
 @keyframes mini-title-marquee {
   0% {
     transform: translateX(0);
   }
   15% {
-    transform: translateX(0); /* 잠깐 멈춤 */
+    transform: translateX(0);
   }
   85% {
     transform: translateX(calc(-1 * var(--mini-title-offset, 0px)));
@@ -719,8 +825,7 @@ body {
   padding: 4px;
 }
 
-
-/* ===== 플레이어 숨기기 ===== */
+/* 플레이어 숨기기 */
 
 .player-container {
   display: none !important;
@@ -733,17 +838,16 @@ body {
   height: 0 !important;
 }
 
-
-/* ===== 커버 변경 바텀 시트 ===== */
+/* ===== 커버 변경/제목 변경 시트 ===== */
 
 .cover-sheet-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.6);
   display: none;
-  align-items: center;      /* flex-end → center */
-  justify-content: center;  /* 가운데 정렬 유지 */
-  z-index: 1100;           /* 미니플레이어(1000)보다 위로 */
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
 }
 
 .cover-sheet-backdrop.show {
@@ -754,12 +858,11 @@ body {
   width: 100%;
   max-width: 480px;
   background: #020617;
-  border-radius: 16px;      /* 16px 16px 0 0 → 완전 모서리 둥글게 */
+  border-radius: 16px;
   border-top: none;
   padding: 12px 16px 16px;
   box-sizing: border-box;
 }
-
 
 .cover-sheet-title {
   font-size: 14px;
@@ -812,7 +915,6 @@ body {
   background: #10b981;
   color: #020617;
 }
-
 
 /* ===== 삭제 확인 모달 ===== */
 

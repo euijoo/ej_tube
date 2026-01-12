@@ -1240,6 +1240,25 @@ clearListButton.addEventListener("click", async () => {
   resetNowPlayingUI();
 });
 
+// ========= 메인 타이틀 편집 =========
+if (titleEl && titleEditBtn) {
+  // 타이틀 영역 클릭 시: 아이콘 한 번 보여주기 (특히 모바일용)
+  titleEl.addEventListener("click", () => {
+    if (!currentTrackId) return;
+    titleEditBtn.style.opacity = "1";
+  });
+
+  // 연필 버튼 클릭 시: 제목 수정 시트 오픈
+  titleEditBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!currentTrackId) return;
+    const track = tracks.find((t) => t.id === currentTrackId);
+    if (!track) return;
+    openTitleRenameSheet(track);
+  });
+}
+
+
 // ========= 커버 시트 =========
 function ensureCoverSheet() {
   if (coverSheetBackdrop) return;
@@ -1304,6 +1323,62 @@ function hideCoverSheet() {
   if (!coverSheetBackdrop) return;
   coverSheetBackdrop.classList.remove("show");
 }
+
+function openTitleRenameSheet(track) {
+  ensureCoverSheet();
+  if (!coverSheetBackdrop || !coverSheetInput || !coverSheetSaveBtn) return;
+
+  // 제목 수정용 텍스트로 바꾸기
+  const titleElSheet = coverSheetBackdrop.querySelector(".cover-sheet-title");
+  const descElSheet = coverSheetBackdrop.querySelector(".cover-sheet-desc");
+  if (titleElSheet) titleElSheet.textContent = "제목 수정";
+  if (descElSheet) descElSheet.textContent = "이 곡의 제목을 입력하세요.";
+
+  coverSheetInput.value = track.title || "";
+  coverSheetBackdrop.classList.add("show");
+  coverSheetInput.focus();
+  coverSheetInput.select();
+
+  const handleSave = async () => {
+    const newTitle = coverSheetInput.value.trim();
+    const finalTitle = newTitle || track.title;
+
+    try {
+      if (newTitle && newTitle !== track.title) {
+        await updateTrackTitleInFirestore(track.id, newTitle);
+        track.title = newTitle;
+        updateNowPlaying(track);
+        renderTrackList();
+      } else {
+        // 변경 없음: UI만 현재 값으로 맞추기
+        if (titleEl) titleEl.textContent = finalTitle;
+      }
+    } catch (err) {
+      console.error("rename error", err);
+      alert("제목을 저장하는 중 문제가 발생했습니다.");
+    } finally {
+      hideCoverSheet();
+      coverSheetSaveBtn.removeEventListener("click", handleSave);
+      coverSheetInput.removeEventListener("keydown", handleKeydown);
+    }
+  };
+
+  const handleKeydown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      hideCoverSheet();
+      coverSheetSaveBtn.removeEventListener("click", handleSave);
+      coverSheetInput.removeEventListener("keydown", handleKeydown);
+    }
+  };
+
+  coverSheetSaveBtn.addEventListener("click", handleSave);
+  coverSheetInput.addEventListener("keydown", handleKeydown);
+}
+
 
 function showCoverSheetForTrack(track, currentUrl) {
   showCoverSheet(currentUrl);

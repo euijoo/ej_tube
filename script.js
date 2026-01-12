@@ -1214,21 +1214,21 @@ onAuthStateChanged(auth, async (user) => {
     } else {
       resetNowPlayingUI();
     }
-  } else {
-  currentUser = null;
-  tracks = [];
-  currentTrackId = null;
+    } else {
+    currentUser = null;
+    tracks = [];
+    currentTrackId = null;
 
-  if (userNickEl) userNickEl.textContent = "";
-  if (userAvatarEl) userAvatarEl.src = "";
+    if (userNickEl) userNickEl.textContent = "";
+    if (userAvatarEl) userAvatarEl.src = "";
 
-  resetNowPlayingUI();
-
-  loginScreen.style.display = "flex";
-  mainScreen.classList.add("hidden");
-  loginError.textContent = "";
-}
+    resetNowPlayingUI();
+    loginScreen.style.display = "flex";
+    mainScreen.classList.add("hidden");
+    loginError.textContent = "";
+  }
 });
+
 
 // ========= 입력/버튼 핸들러 =========
 addButton.addEventListener("click", () => {

@@ -1545,6 +1545,18 @@ function updateNewMiniPlayer() {
 
 setInterval(updateNewMiniPlayer, 1000);
 
+// ✅ 볼륨 슬라이더 이벤트
+if (miniVolume) {
+  miniVolume.addEventListener("input", () => {
+    if (!player || !window.YT) return;
+    const v = Number(miniVolume.value);
+    try {
+      player.setVolume(v); // 0~100
+    } catch (e) {}
+  });
+}
+
+
 const progressBar = document.getElementById("miniProgressBar");
 if (progressBar) {
   progressBar.addEventListener("click", (e) => {

@@ -64,6 +64,9 @@ let coverSheetBackdrop = null;
 let coverSheetInput = null;
 let coverSheetSaveBtn = null;
 let coverSheetCancelBtn = null;
+let albumSheetBackdrop = null;
+let albumSheetDialog = null;
+
 
 // ========= 유틸 =========
 function extractVideoId(url) {
@@ -225,6 +228,48 @@ async function updateTrackAlbumInFirestore(id, albumId) {
   const trackRef = doc(db, "users", currentUser.uid, "tracks", id);
   await updateDoc(trackRef, { albumId });
 }
+
+async function moveTrackToAlbum(track, targetAlbumIdOrNull, newAlbumName) {
+  if (!currentUser) {
+    alert("먼저 Google 계정으로 로그인해 주세요.");
+    return;
+  }
+  if (!track) return;
+
+  try {
+    let targetAlbumId = targetAlbumIdOrNull;
+
+    // 새 앨범 이름이 넘어온 경우: 없으면 생성
+    if (!targetAlbumId && newAlbumName) {
+      const name = newAlbumName.trim();
+      if (!name) {
+        // 이름이 없으면 Main list로 이동(앨범 해제)
+        await updateTrackAlbumInFirestore(track.id, null);
+        track.albumId = null;
+        renderTrackList();
+        return;
+      }
+
+      // 기존 앨범 중 같은 이름이 있는지 먼저 확인
+      let album = albums.find(
+        (a) => a.name.toLowerCase() === name.toLowerCase()
+      );
+      if (!album) {
+        album = await addAlbumToFirestore(name);
+      }
+      targetAlbumId = album.id;
+    }
+
+    // targetAlbumId가 null이면 Main list로 이동(앨범 해제)
+    await updateTrackAlbumInFirestore(track.id, targetAlbumId || null);
+    track.albumId = targetAlbumId || null;
+    renderTrackList();
+  } catch (err) {
+    alert("앨범으로 이동하는 중 오류가 발생했어요.");
+  }
+}
+
+
 
 async function loadTracksFromFirestore() {
   if (!currentUser) return;
@@ -418,52 +463,18 @@ function createTrackListItem(track) {
     showCoverSheetForTrack(track, track.customThumbnail || track.thumbnail || "");
   });
 
-  moveToAlbumItem.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    closeAllTrackMenus();
+  moveToAlbumItem.addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeAllTrackMenus();
 
-    if (!currentUser) {
-      alert("먼저 Google 계정으로 로그인해 주세요.");
-      return;
-    }
+  if (!currentUser) {
+    alert("먼저 Google 계정으로 로그인해 주세요.");
+    return;
+  }
 
-    const currentAlbum = albums.find((a) => a.id === track.albumId)?.name || "Main list";
-    const input = prompt(
-      [
-        "Move to album",
-        "",
-        `현재 앨범: ${currentAlbum}`,
-        "원하는 앨범 이름을 입력하세요.",
-        "(새 이름이면 새 앨범이 생성됩니다.)",
-      ].join("\n"),
-      currentAlbum === "Main list" ? "" : currentAlbum
-    );
+  showAlbumSelectSheet(track);
+});
 
-    if (input === null) return;
-
-    const name = input.trim();
-    if (!name) {
-      try {
-        await updateTrackAlbumInFirestore(track.id, null);
-        track.albumId = null;
-        renderTrackList();
-      } catch (err) {
-        alert("앨범에서 빼는 중 오류가 발생했어요.");
-      }
-      return;
-    }
-
-    let album = albums.find((a) => a.name.toLowerCase() === name.toLowerCase());
-
-    try {
-      if (!album) album = await addAlbumToFirestore(name);
-      await updateTrackAlbumInFirestore(track.id, album.id);
-      track.albumId = album.id;
-      renderTrackList();
-    } catch (err) {
-      alert("앨범으로 이동하는 중 오류가 발생했어요.");
-    }
-  });
 
   removeFromAlbumItem.addEventListener("click", async (e) => {
     e.stopPropagation();
@@ -606,6 +617,143 @@ function renderTrackList() {
   mainSection.appendChild(mainUl);
   trackListEl.appendChild(mainSection);
 }
+
+function ensureAlbumSheet() {
+  if (albumSheetBackdrop) return;
+
+  albumSheetBackdrop = document.createElement("div");
+  albumSheetBackdrop.className = "delete-confirm-backdrop"; // 배경 재사용
+
+  const dialog = document.createElement("div");
+  dialog.className = "delete-confirm-dialog"; // 스타일 재사용
+
+  const titleEl = document.createElement("p");
+  titleEl.className = "delete-confirm-message";
+  titleEl.textContent = "Move to album";
+
+  const currentEl = document.createElement("p");
+  currentEl.className = "album-current-info";
+
+  const listBox = document.createElement("div");
+  listBox.className = "album-select-list";
+
+  const newBox = document.createElement("div");
+  newBox.className = "album-new-box";
+
+  const newInput = document.createElement("input");
+  newInput.type = "text";
+  newInput.placeholder = "새 앨범 이름 입력";
+  newInput.className = "album-new-input";
+
+  const newBtn = document.createElement("button");
+  newBtn.className = "album-new-btn";
+  newBtn.textContent = "Create & move";
+
+  newBox.appendChild(newInput);
+  newBox.appendChild(newBtn);
+
+  const actions = document.createElement("div");
+  actions.className = "delete-confirm-actions";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "delete-confirm-btn no";
+  cancelBtn.textContent = "Cancel";
+
+  actions.appendChild(cancelBtn);
+
+  dialog.appendChild(titleEl);
+  dialog.appendChild(currentEl);
+  dialog.appendChild(listBox);
+  dialog.appendChild(newBox);
+  dialog.appendChild(actions);
+
+  albumSheetBackdrop.appendChild(dialog);
+  document.body.appendChild(albumSheetBackdrop);
+
+  albumSheetDialog = {
+    backdrop: albumSheetBackdrop,
+    currentEl,
+    listBox,
+    newInput,
+    newBtn,
+    cancelBtn,
+  };
+}
+
+function showAlbumSelectSheet(track) {
+  if (!track) return;
+  ensureAlbumSheet();
+  const { backdrop, currentEl, listBox, newInput, newBtn, cancelBtn } =
+    albumSheetDialog;
+
+  // 현재 앨범 표시
+  const currentAlbum =
+    albums.find((a) => a.id === track.albumId)?.name || "Main list";
+  currentEl.textContent = `현재 앨범: ${currentAlbum}`;
+
+  // 리스트 초기화
+  listBox.innerHTML = "";
+
+  const close = () => {
+    backdrop.classList.remove("show");
+    newInput.value = "";
+  };
+
+  // Main list 버튼
+  const mainBtn = document.createElement("button");
+  mainBtn.className = "album-select-btn";
+  mainBtn.textContent = "Main list";
+  mainBtn.addEventListener("click", async () => {
+    await moveTrackToAlbum(track, null, null);
+    close();
+  });
+  listBox.appendChild(mainBtn);
+
+  // 기존 앨범 목록 (이름순)
+  [...albums]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach((album) => {
+      const btn = document.createElement("button");
+      btn.className = "album-select-btn";
+      btn.textContent = album.name;
+      btn.addEventListener("click", async () => {
+        await moveTrackToAlbum(track, album.id, null);
+        close();
+      });
+      listBox.appendChild(btn);
+    });
+
+  // 새 앨범 입력 & 이동
+  const handleCreate = async () => {
+    const name = newInput.value.trim();
+    if (!name) {
+      newInput.focus();
+      return;
+    }
+    await moveTrackToAlbum(track, null, name);
+    close();
+  };
+
+  newBtn.onclick = handleCreate;
+  newInput.onkeydown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleCreate();
+    }
+  };
+
+  cancelBtn.onclick = () => {
+    close();
+  };
+
+  backdrop.onclick = (e) => {
+    if (e.target === backdrop) close();
+  };
+
+  backdrop.classList.add("show");
+  newInput.focus();
+}
+
 
 function showDeleteConfirm(onYes) {
   let backdrop = document.querySelector(".delete-confirm-backdrop");

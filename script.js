@@ -52,10 +52,12 @@ const addButton = document.getElementById("addButton");
 const videoUrlInput = document.getElementById("videoUrl");
 const clearListButton = document.getElementById("clearListButton");
 const trackListEl = document.getElementById("trackList");
-const titleEl = document.getElementById("title");
-const artistEl = document.getElementById("artist");
-const thumbnailEl = document.getElementById("thumbnail");
-const changeCoverBtn = document.getElementById("changeCoverBtn");
+const titleEl = document.getElementById('title');
+const artistEl = document.getElementById('artist');
+const thumbnailEl = document.getElementById('thumbnail');
+const changeCoverBtn = document.getElementById('changeCoverBtn');
+const titleEditBtn = document.getElementById('titleEditBtn');
+
 
 let coverSheetBackdrop = null;
 let coverSheetInput = null;
@@ -319,17 +321,13 @@ function createTrackListItem(track) {
   const metaDiv = document.createElement("div");
   metaDiv.className = "track-item-meta";
 
-  const menuBtn = document.createElement("button");
+    const menuBtn = document.createElement("button");
   menuBtn.className = "track-menu-btn";
   menuBtn.type = "button";
   menuBtn.textContent = "⋯";
 
   const menu = document.createElement("div");
   menu.className = "track-menu";
-
-  const renameItem = document.createElement("button");
-  renameItem.className = "track-menu-item";
-  renameItem.textContent = "Rename title";
 
   const changeCoverItem = document.createElement("button");
   changeCoverItem.className = "track-menu-item";
@@ -347,11 +345,11 @@ function createTrackListItem(track) {
   removeItem.className = "track-menu-item danger";
   removeItem.textContent = "Remove from playlist";
 
-  menu.appendChild(renameItem);
   menu.appendChild(changeCoverItem);
   menu.appendChild(moveToAlbumItem);
   menu.appendChild(removeFromAlbumItem);
   menu.appendChild(removeItem);
+
 
   metaDiv.appendChild(menuBtn);
   metaDiv.appendChild(menu);
@@ -364,7 +362,6 @@ function createTrackListItem(track) {
   li.addEventListener("click", (e) => {
     if (
       e.target === menuBtn ||
-      e.target === renameItem ||
       e.target === changeCoverItem ||
       e.target === moveToAlbumItem ||
       e.target === removeFromAlbumItem ||
@@ -412,47 +409,7 @@ function createTrackListItem(track) {
     }
   });
 
-  renameItem.addEventListener("click", (e) => {
-    e.stopPropagation();
-    closeAllTrackMenus();
-
-    const currentTitle = track.title;
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = currentTitle;
-    input.className = "track-title-input";
-    input.style.width = "100%";
-
-    titleDiv.replaceChildren(input);
-    input.focus();
-    input.select();
-
-    const finishEdit = async (save) => {
-      const newTitle = input.value.trim();
-      const finalTitle = save && newTitle ? newTitle : currentTitle;
-
-      track.title = finalTitle;
-      titleDiv.textContent = finalTitle;
-
-      if (save && newTitle && newTitle !== currentTitle) {
-        try {
-          await updateTrackTitleInFirestore(track.id, newTitle);
-          if (currentTrackId === track.id) updateNowPlaying(track);
-        } catch (err) {
-          console.error("제목 업데이트 실패:", err);
-          alert("제목을 저장하는 중 오류가 발생했어요.");
-          track.title = currentTitle;
-          titleDiv.textContent = currentTitle;
-        }
-      }
-    };
-
-    input.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter") finishEdit(true);
-      else if (ev.key === "Escape") finishEdit(false);
-    });
-    input.addEventListener("blur", () => finishEdit(true));
-  });
+  
 
   changeCoverItem.addEventListener("click", (e) => {
     e.stopPropagation();

@@ -53,12 +53,11 @@ const addButton = document.getElementById("addButton");
 const videoUrlInput = document.getElementById("videoUrl");
 const clearListButton = document.getElementById("clearListButton");
 const trackListEl = document.getElementById("trackList");
-const titleEl = document.getElementById('title');
-const artistEl = document.getElementById('artist');
-const thumbnailEl = document.getElementById('thumbnail');
-const changeCoverBtn = document.getElementById('changeCoverBtn');
-const titleEditBtn = document.getElementById('titleEditBtn');
-
+const titleEl = document.getElementById("title");
+const artistEl = document.getElementById("artist");
+const thumbnailEl = document.getElementById("thumbnail");
+const changeCoverBtn = document.getElementById("changeCoverBtn");
+const titleEditBtn = document.getElementById("titleEditBtn");
 
 let coverSheetBackdrop = null;
 let coverSheetInput = null;
@@ -66,7 +65,6 @@ let coverSheetSaveBtn = null;
 let coverSheetCancelBtn = null;
 let albumSheetBackdrop = null;
 let albumSheetDialog = null;
-
 
 // ========= 유틸 =========
 function extractVideoId(url) {
@@ -100,7 +98,8 @@ async function fetchVideoInfo(videoId) {
   const res = await fetch(`${endpoint}?${params.toString()}`);
   if (!res.ok) throw new Error("YouTube Data API 오류");
   const data = await res.json();
-  if (!data.items || data.items.length === 0) throw new Error("영상 정보를 찾을 수 없음");
+  if (!data.items || data.items.length === 0)
+    throw new Error("영상 정보를 찾을 수 없음");
 
   const snippet = data.items[0].snippet;
   const thumbs = snippet.thumbnails || {};
@@ -229,6 +228,39 @@ async function updateTrackAlbumInFirestore(id, albumId) {
   await updateDoc(trackRef, { albumId });
 }
 
+// 앨범 이름 변경
+async function renameAlbumInFirestore(albumId, newName) {
+  if (!currentUser) return;
+  const albumRef = doc(db, "users", currentUser.uid, "albums", albumId);
+  await updateDoc(albumRef, { name: newName });
+}
+
+// 앨범 삭제 (앨범 문서 삭제 + 해당 트랙들 albumId 제거)
+async function deleteAlbumInFirestore(albumId) {
+  if (!currentUser) return;
+
+  // 1) albums 컬렉션에서 삭제
+  const albumRef = doc(db, "users", currentUser.uid, "albums", albumId);
+  await deleteDoc(albumRef);
+
+  // 2) tracks 컬렉션에서 해당 albumId 가진 트랙들 albumId 제거
+  const colRef = getTracksCollectionRef(currentUser.uid);
+  const snap = await getDocs(colRef);
+  const updates = [];
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+    if (data.albumId === albumId) {
+      updates.push(
+        updateDoc(doc(db, "users", currentUser.uid, "tracks", docSnap.id), {
+          albumId: null,
+        })
+      );
+    }
+  });
+  await Promise.all(updates);
+}
+
+// 트랙을 앨범으로 이동 (새 앨범 생성 포함)
 async function moveTrackToAlbum(track, targetAlbumIdOrNull, newAlbumName) {
   if (!currentUser) {
     alert("먼저 Google 계정으로 로그인해 주세요.");
@@ -269,7 +301,39 @@ async function moveTrackToAlbum(track, targetAlbumIdOrNull, newAlbumName) {
   }
 }
 
+// 앨범 이름 변경 + 로컬 배열/화면 반영
+async function renameAlbum(album, newName) {
+  const name = (newName || "").trim();
+  if (!name) return;
+  try {
+    await renameAlbumInFirestore(album.id, name);
+    album.name = name;
+    const idx = albums.findIndex((a) => a.id === album.id);
+    if (idx !== -1) albums[idx].name = name;
+    renderTrackList();
+  } catch (err) {
+    alert("앨범 이름을 변경하는 중 오류가 발생했어요.");
+  }
+}
 
+// 앨범 삭제 + 로컬 반영
+async function deleteAlbum(album) {
+  try {
+    await deleteAlbumInFirestore(album.id);
+
+    albums = albums.filter((a) => a.id !== album.id);
+
+    tracks.forEach((t) => {
+      if (t.albumId === album.id) {
+        t.albumId = null;
+      }
+    });
+
+    renderTrackList();
+  } catch (err) {
+    alert("앨범을 삭제하는 중 오류가 발생했어요.");
+  }
+}
 
 async function loadTracksFromFirestore() {
   if (!currentUser) return;
@@ -311,7 +375,9 @@ async function clearTracksInFirestore() {
   const snap = await getDocs(colRef);
   const promises = [];
   snap.forEach((docSnap) => {
-    promises.push(deleteDoc(doc(db, "users", currentUser.uid, "tracks", docSnap.id)));
+    promises.push(
+      deleteDoc(doc(db, "users", currentUser.uid, "tracks", docSnap.id))
+    );
   });
   await Promise.all(promises);
 }
@@ -327,7 +393,6 @@ async function updateTrackCustomThumbnailInFirestore(id, url) {
   const trackRef = doc(db, "users", currentUser.uid, "tracks", id);
   await updateDoc(trackRef, { customThumbnail: url });
 }
-
 // ========= 트랙/앨범 분리 =========
 function splitTracksByAlbum() {
   const mainTracks = [];
@@ -367,7 +432,7 @@ function createTrackListItem(track) {
   const metaDiv = document.createElement("div");
   metaDiv.className = "track-item-meta";
 
-    const menuBtn = document.createElement("button");
+  const menuBtn = document.createElement("button");
   menuBtn.className = "track-menu-btn";
   menuBtn.type = "button";
   menuBtn.textContent = "⋯";
@@ -395,7 +460,6 @@ function createTrackListItem(track) {
   menu.appendChild(moveToAlbumItem);
   menu.appendChild(removeFromAlbumItem);
   menu.appendChild(removeItem);
-
 
   metaDiv.appendChild(menuBtn);
   metaDiv.appendChild(menu);
@@ -437,7 +501,6 @@ function createTrackListItem(track) {
     if (!isOpen) {
       menu.classList.remove("open-up");
 
-      // 높이 측정을 위해 잠깐 보이게
       menu.style.visibility = "hidden";
       menu.classList.add("open");
 
@@ -450,31 +513,30 @@ function createTrackListItem(track) {
         menu.classList.add("open-up");
       }
 
-      // 다시 보이도록
       menu.style.visibility = "";
     }
   });
 
-  
-
   changeCoverItem.addEventListener("click", (e) => {
     e.stopPropagation();
     closeAllTrackMenus();
-    showCoverSheetForTrack(track, track.customThumbnail || track.thumbnail || "");
+    showCoverSheetForTrack(
+      track,
+      track.customThumbnail || track.thumbnail || ""
+    );
   });
 
   moveToAlbumItem.addEventListener("click", (e) => {
-  e.stopPropagation();
-  closeAllTrackMenus();
+    e.stopPropagation();
+    closeAllTrackMenus();
 
-  if (!currentUser) {
-    alert("먼저 Google 계정으로 로그인해 주세요.");
-    return;
-  }
+    if (!currentUser) {
+      alert("먼저 Google 계정으로 로그인해 주세요.");
+      return;
+    }
 
-  showAlbumSelectSheet(track);
-});
-
+    showAlbumSelectSheet(track);
+  });
 
   removeFromAlbumItem.addEventListener("click", async (e) => {
     e.stopPropagation();
@@ -510,7 +572,11 @@ function createAlbumItem(album, albumTracks) {
   const thumb = document.createElement("img");
   thumb.className = "album-item-thumb";
   const firstTrack = albumTracks[0] || null;
-  thumb.src = firstTrack?.customThumbnail || firstTrack?.thumbnail || thumbnailEl.src || "";
+  thumb.src =
+    firstTrack?.customThumbnail ||
+    firstTrack?.thumbnail ||
+    thumbnailEl.src ||
+    "";
   thumb.alt = album.name;
 
   const meta = document.createElement("div");
@@ -527,14 +593,40 @@ function createAlbumItem(album, albumTracks) {
   meta.appendChild(nameEl);
   meta.appendChild(countEl);
 
+  const albumMenuBtn = document.createElement("button");
+  albumMenuBtn.className = "album-menu-btn";
+  albumMenuBtn.type = "button";
+  albumMenuBtn.textContent = "⋯";
+
+  const albumMenu = document.createElement("div");
+  albumMenu.className = "album-menu";
+
+  const renameItem = document.createElement("button");
+  renameItem.className = "album-menu-item";
+  renameItem.textContent = "Rename album";
+
+  const deleteItem = document.createElement("button");
+  deleteItem.className = "album-menu-item danger";
+  deleteItem.textContent = "Delete album";
+
+  albumMenu.appendChild(renameItem);
+  albumMenu.appendChild(deleteItem);
+
+  const rightBox = document.createElement("div");
+  rightBox.className = "album-header-right";
+  rightBox.appendChild(albumMenuBtn);
+  rightBox.appendChild(albumMenu);
+
   const toggleBtn = document.createElement("button");
   toggleBtn.className = "album-item-toggle";
   toggleBtn.type = "button";
   toggleBtn.textContent = "▾";
 
+  rightBox.appendChild(toggleBtn);
+
   header.appendChild(thumb);
   header.appendChild(meta);
-  header.appendChild(toggleBtn);
+  header.appendChild(rightBox);
 
   const collapsible = document.createElement("ul");
   collapsible.className = "album-track-list-collapsible";
@@ -569,8 +661,66 @@ function createAlbumItem(album, albumTracks) {
     }
   };
 
-  header.addEventListener("click", () => {
+  header.addEventListener("click", (e) => {
+    if (
+      e.target === albumMenuBtn ||
+      e.target === renameItem ||
+      e.target === deleteItem
+    ) {
+      return;
+    }
     toggle();
+  });
+
+  albumMenuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    const isOpen = albumMenu.classList.contains("open");
+    closeAllTrackMenus();
+    document
+      .querySelectorAll(".album-menu.open")
+      .forEach((m) => m.classList.remove("open", "open-up"));
+
+    if (!isOpen) {
+      albumMenu.classList.remove("open-up");
+
+      albumMenu.style.visibility = "hidden";
+      albumMenu.classList.add("open");
+
+      const rect = albumMenu.getBoundingClientRect();
+      const menuHeight = rect.height || 120;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+        albumMenu.classList.add("open-up");
+      }
+
+      albumMenu.style.visibility = "";
+    } else {
+      albumMenu.classList.remove("open", "open-up");
+    }
+  });
+
+  renameItem.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    albumMenu.classList.remove("open", "open-up");
+
+    const input = prompt("새 앨범 이름을 입력하세요.", album.name);
+    if (input === null) return;
+    const name = input.trim();
+    if (!name || name === album.name) return;
+
+    await renameAlbum(album, name);
+  });
+
+  deleteItem.addEventListener("click", (e) => {
+    e.stopPropagation();
+    albumMenu.classList.remove("open", "open-up");
+
+    showDeleteConfirm(async () => {
+      await deleteAlbum(album);
+    });
   });
 
   wrapper.appendChild(header);
@@ -597,10 +747,8 @@ function renderTrackList() {
 
   [...albums].sort((a, b) => a.name.localeCompare(b.name)).forEach((album) => {
     const albumTracks = albumTrackMap[album.id] || [];
-    if (albumTracks.length > 0) {
-      const wrapper = createAlbumItem(album, albumTracks);
-      trackListEl.appendChild(wrapper);
-    }
+    const wrapper = createAlbumItem(album, albumTracks);
+    trackListEl.appendChild(wrapper);
   });
 
   const mainSection = document.createElement("div");
@@ -622,10 +770,10 @@ function ensureAlbumSheet() {
   if (albumSheetBackdrop) return;
 
   albumSheetBackdrop = document.createElement("div");
-  albumSheetBackdrop.className = "delete-confirm-backdrop"; // 배경 재사용
+  albumSheetBackdrop.className = "delete-confirm-backdrop";
 
   const dialog = document.createElement("div");
-  dialog.className = "delete-confirm-dialog"; // 스타일 재사용
+  dialog.className = "delete-confirm-dialog";
 
   const titleEl = document.createElement("p");
   titleEl.className = "delete-confirm-message";
@@ -686,12 +834,10 @@ function showAlbumSelectSheet(track) {
   const { backdrop, currentEl, listBox, newInput, newBtn, cancelBtn } =
     albumSheetDialog;
 
-  // 현재 앨범 표시
   const currentAlbum =
     albums.find((a) => a.id === track.albumId)?.name || "Main list";
   currentEl.textContent = `현재 앨범: ${currentAlbum}`;
 
-  // 리스트 초기화
   listBox.innerHTML = "";
 
   const close = () => {
@@ -699,7 +845,6 @@ function showAlbumSelectSheet(track) {
     newInput.value = "";
   };
 
-  // Main list 버튼
   const mainBtn = document.createElement("button");
   mainBtn.className = "album-select-btn";
   mainBtn.textContent = "Main list";
@@ -709,7 +854,6 @@ function showAlbumSelectSheet(track) {
   });
   listBox.appendChild(mainBtn);
 
-  // 기존 앨범 목록 (이름순)
   [...albums]
     .sort((a, b) => a.name.localeCompare(b.name))
     .forEach((album) => {
@@ -723,7 +867,6 @@ function showAlbumSelectSheet(track) {
       listBox.appendChild(btn);
     });
 
-  // 새 앨범 입력 & 이동
   const handleCreate = async () => {
     const name = newInput.value.trim();
     if (!name) {
@@ -753,8 +896,6 @@ function showAlbumSelectSheet(track) {
   backdrop.classList.add("show");
   newInput.focus();
 }
-
-
 function showDeleteConfirm(onYes) {
   let backdrop = document.querySelector(".delete-confirm-backdrop");
   if (!backdrop) {
@@ -822,6 +963,9 @@ function handleGlobalMenuClose() {
 
 function closeAllTrackMenus() {
   document.querySelectorAll(".track-menu.open").forEach((m) => {
+    m.classList.remove("open", "open-up");
+  });
+  document.querySelectorAll(".album-menu.open").forEach((m) => {
     m.classList.remove("open", "open-up");
   });
 }
@@ -1028,7 +1172,6 @@ async function addFromInputUrl(url) {
         updateNowPlaying(firstTrack);
         playVideoById(firstTrack.videoId);
       }
-
       renderTrackList();
     } catch (err) {
       console.error(err);
@@ -1103,7 +1246,6 @@ function playTrack(id) {
 
   setTimeout(updatePlayingIndicator, 300);
 }
-
 function playVideoById(videoId) {
   if (!player) {
     player = new YT.Player("player", {
@@ -1239,7 +1381,6 @@ function updateNewMiniPlayer() {
 
 setInterval(updateNewMiniPlayer, 1000);
 
-// 미니 플레이어 프로그레스바 클릭 seek
 const progressBar = document.getElementById("miniProgressBar");
 if (progressBar) {
   progressBar.addEventListener("click", (e) => {
@@ -1257,7 +1398,6 @@ if (progressBar) {
   });
 }
 
-// ▶ B안 핵심: 재생/일시정지는 이 버튼으로만
 const playPauseBtnNew = document.getElementById("miniPlayPauseBtnNew");
 if (playPauseBtnNew) {
   playPauseBtnNew.addEventListener("click", () => {
@@ -1291,7 +1431,6 @@ if (playPauseBtnNew) {
   });
 }
 
-// 다음 곡 버튼
 const miniNextBtn = document.getElementById("miniNextBtn");
 if (miniNextBtn) {
   miniNextBtn.addEventListener("click", () => {
@@ -1311,8 +1450,12 @@ googleLoginButton.addEventListener("click", async () => {
     await signInWithPopup(auth, provider);
   } catch (err) {
     console.error("login error:", err.code, err.message);
-    if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
-      loginError.textContent = "팝업이 차단되었어요. 브라우저 팝업/쿠키 설정을 확인해 주세요.";
+    if (
+      err.code === "auth/popup-blocked" ||
+      err.code === "auth/popup-closed-by-user"
+    ) {
+      loginError.textContent =
+        "팝업이 차단되었어요. 브라우저 팝업/쿠키 설정을 확인해 주세요.";
     } else {
       loginError.textContent = `로그인 오류 (${err.code}) 잠시 후 다시 시도해 주세요.`;
     }
@@ -1338,12 +1481,11 @@ onAuthStateChanged(auth, async (user) => {
     const nick = email.includes("@") ? email.split("@")[0] : email;
     if (userNickEl) userNickEl.textContent = nick;
 
-    // ✅ Google 프로필 이미지 연동
     if (userAvatarEl) {
       if (user.photoURL) {
         userAvatarEl.src = user.photoURL;
       } else {
-        userAvatarEl.src = ""; // 기본 이미지 쓰고 싶으면 여기서 대체
+        userAvatarEl.src = "";
       }
     }
 
@@ -1362,7 +1504,7 @@ onAuthStateChanged(auth, async (user) => {
     } else {
       resetNowPlayingUI();
     }
-    } else {
+  } else {
     currentUser = null;
     tracks = [];
     currentTrackId = null;
@@ -1376,7 +1518,6 @@ onAuthStateChanged(auth, async (user) => {
     loginError.textContent = "";
   }
 });
-
 
 // ========= 입력/버튼 핸들러 =========
 addButton.addEventListener("click", () => {
@@ -1403,16 +1544,13 @@ clearListButton.addEventListener("click", async () => {
   renderTrackList();
   resetNowPlayingUI();
 });
-
 // ========= 메인 타이틀 편집 =========
 if (titleEl && titleEditBtn) {
-  // 타이틀 영역 클릭 시: 아이콘 한 번 보여주기 (특히 모바일용)
   titleEl.addEventListener("click", () => {
     if (!currentTrackId) return;
     titleEditBtn.style.opacity = "1";
   });
 
-  // 연필 버튼 클릭 시: 제목 수정 시트 오픈
   titleEditBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     if (!currentTrackId) return;
@@ -1421,7 +1559,6 @@ if (titleEl && titleEditBtn) {
     openTitleRenameSheet(track);
   });
 }
-
 
 // ========= 커버 시트 =========
 function ensureCoverSheet() {
@@ -1435,12 +1572,11 @@ function ensureCoverSheet() {
 
   const title = document.createElement("p");
   title.className = "cover-sheet-title";
-  title.textContent = "커버 이미지 링크 변경";
+  title.textContent = "커버 이미지 변경";
 
   const desc = document.createElement("p");
   desc.className = "cover-sheet-desc";
-  desc.textContent =
-    "이미지 주소를 직접 넣어서 커버를 바꿀 수 있어요. 비워서 저장하면 원래 썸네일로 돌아갑니다.";
+  desc.textContent = "이미지 URL을 붙여넣어 주세요.";
 
   coverSheetInput = document.createElement("input");
   coverSheetInput.type = "text";
@@ -1452,11 +1588,11 @@ function ensureCoverSheet() {
 
   coverSheetCancelBtn = document.createElement("button");
   coverSheetCancelBtn.className = "cover-sheet-btn cancel";
-  coverSheetCancelBtn.textContent = "취소";
+  coverSheetCancelBtn.textContent = "Cancel";
 
   coverSheetSaveBtn = document.createElement("button");
   coverSheetSaveBtn.className = "cover-sheet-btn save";
-  coverSheetSaveBtn.textContent = "저장";
+  coverSheetSaveBtn.textContent = "Save";
 
   actions.appendChild(coverSheetCancelBtn);
   actions.appendChild(coverSheetSaveBtn);
@@ -1469,7 +1605,7 @@ function ensureCoverSheet() {
   coverSheetBackdrop.appendChild(sheet);
   document.body.appendChild(coverSheetBackdrop);
 
-  coverSheetCancelBtn.addEventListener("click", () => hideCoverSheet());
+  coverSheetCancelBtn.addEventListener("click", hideCoverSheet);
   coverSheetBackdrop.addEventListener("click", (e) => {
     if (e.target === coverSheetBackdrop) hideCoverSheet();
   });
@@ -1477,7 +1613,7 @@ function ensureCoverSheet() {
 
 function showCoverSheet(currentUrl) {
   ensureCoverSheet();
-  coverSheetInput.value = currentUrl || "";
+  coverSheetInput.value = currentUrl;
   coverSheetBackdrop.classList.add("show");
   coverSheetInput.focus();
   coverSheetInput.select();
@@ -1492,13 +1628,15 @@ function openTitleRenameSheet(track) {
   ensureCoverSheet();
   if (!coverSheetBackdrop || !coverSheetInput || !coverSheetSaveBtn) return;
 
-  // 제목 수정용 텍스트로 바꾸기
-  const titleElSheet = coverSheetBackdrop.querySelector(".cover-sheet-title");
+  const titleElSheet =
+    coverSheetBackdrop.querySelector(".cover-sheet-title");
   const descElSheet = coverSheetBackdrop.querySelector(".cover-sheet-desc");
-  if (titleElSheet) titleElSheet.textContent = "제목 수정";
-  if (descElSheet) descElSheet.textContent = "이 곡의 제목을 입력하세요.";
 
-  coverSheetInput.value = track.title || "";
+  if (titleElSheet) titleElSheet.textContent = "제목 변경";
+  if (descElSheet)
+    descElSheet.textContent = "새 제목을 입력해 주세요.";
+
+  coverSheetInput.value = track.title;
   coverSheetBackdrop.classList.add("show");
   coverSheetInput.focus();
   coverSheetInput.select();
@@ -1506,7 +1644,6 @@ function openTitleRenameSheet(track) {
   const handleSave = async () => {
     const newTitle = coverSheetInput.value.trim();
     const finalTitle = newTitle || track.title;
-
     try {
       if (newTitle && newTitle !== track.title) {
         await updateTrackTitleInFirestore(track.id, newTitle);
@@ -1514,12 +1651,11 @@ function openTitleRenameSheet(track) {
         updateNowPlaying(track);
         renderTrackList();
       } else {
-        // 변경 없음: UI만 현재 값으로 맞추기
         if (titleEl) titleEl.textContent = finalTitle;
       }
     } catch (err) {
-      console.error("rename error", err);
-      alert("제목을 저장하는 중 문제가 발생했습니다.");
+      console.error("rename error:", err);
+      alert("제목을 변경하는 중 오류가 발생했어요.");
     } finally {
       hideCoverSheet();
       coverSheetSaveBtn.removeEventListener("click", handleSave);
@@ -1543,10 +1679,8 @@ function openTitleRenameSheet(track) {
   coverSheetInput.addEventListener("keydown", handleKeydown);
 }
 
-
 function showCoverSheetForTrack(track, currentUrl) {
   showCoverSheet(currentUrl);
-
   const handleSave = async () => {
     const trimmed = coverSheetInput.value.trim();
     const newCustom = trimmed || null;
@@ -1557,8 +1691,8 @@ function showCoverSheetForTrack(track, currentUrl) {
       updateNowPlaying(track);
       renderTrackList();
     } catch (err) {
-      console.error("커버 이미지 업데이트 실패:", err);
-      alert("커버 이미지를 저장하는 중 오류가 발생했어요.");
+      console.error("cover update error:", err);
+      alert("커버 이미지를 변경하는 중 오류가 발생했어요.");
     } finally {
       hideCoverSheet();
       coverSheetSaveBtn.removeEventListener("click", handleSave);
@@ -1585,17 +1719,19 @@ function showCoverSheetForTrack(track, currentUrl) {
 if (changeCoverBtn) {
   changeCoverBtn.addEventListener("click", () => {
     if (!currentTrackId) {
-      alert("먼저 재생할 곡을 선택해 주세요.");
+      alert("먼저 재생할 트랙을 선택해 주세요.");
       return;
     }
     const track = tracks.find((t) => t.id === currentTrackId);
     if (!track) return;
-
-    showCoverSheetForTrack(track, track.customThumbnail || track.thumbnail || "");
+    showCoverSheetForTrack(
+      track,
+      track.customThumbnail || track.thumbnail || ""
+    );
   });
 }
 
-// ========= iOS 제스처 방지 =========
+// iOS 확대 방지
 document.addEventListener("gesturestart", function (e) {
   e.preventDefault();
 });
@@ -1611,20 +1747,4 @@ if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
 
   document.addEventListener(
     "touchmove",
-    function (e) {
-      if (e.scale && e.scale !== 1) e.preventDefault();
-    },
-    { passive: false }
-  );
-
-  let lastTouchEnd = 0;
-  document.addEventListener(
-    "touchend",
-    function (e) {
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) e.preventDefault();
-      lastTouchEnd = now;
-    },
-    { passive: false }
-  );
-}
+    func

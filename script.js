@@ -1837,11 +1837,76 @@ function showCoverSheetForTrack(track, currentUrl) {
   coverSheetInput.addEventListener("keydown", handleKeydown);
 }
 
-// 상단 메인 커버 버튼: 현재 트랙 커버만 수정
+// 상단 메인 커버 버튼: 현재 선택된 앨범 커버 우선, 없으면 현재 트랙 커버
 if (changeCoverBtn) {
   changeCoverBtn.addEventListener("click", () => {
+    // 1) 현재 선택된 앨범이 있으면 → 앨범 커버 변경
+    if (currentAlbumId) {
+      const album = albums.find((a) => a.id === currentAlbumId);
+      if (!album) return;
+
+      // 이 앨범에 속한 트랙들 중 첫 번째를 찾아서 기본 썸네일 후보로 사용
+      const albumTracks = tracks.filter((t) => t.albumId === album.id);
+      const firstTrack = albumTracks[0] || null;
+      const currentCover =
+        album.coverUrl ||
+        firstTrack?.customThumbnail ||
+        firstTrack?.thumbnail ||
+        thumbnailEl.src ||
+        "";
+
+      showCoverSheet(currentCover);
+
+      const handleSave = async () => {
+        const trimmed = coverSheetInput.value.trim();
+        const newCover = trimmed || null;
+
+        try {
+          await updateAlbumCoverInFirestore(album.id, newCover);
+          album.coverUrl = newCover;
+
+          // 상단에 이 앨범이 선택되어 있으면 썸네일 즉시 반영
+          if (currentAlbumId === album.id) {
+            if (newCover) {
+              thumbnailEl.src = newCover;
+            } else if (firstTrack?.thumbnail) {
+              thumbnailEl.src =
+                firstTrack.customThumbnail || firstTrack.thumbnail;
+            } else {
+              thumbnailEl.removeAttribute("src");
+            }
+          }
+
+          renderTrackList();
+        } catch (err) {
+          alert("앨범 커버를 변경하는 중 오류가 발생했어요.");
+        } finally {
+          hideCoverSheet();
+          coverSheetSaveBtn.removeEventListener("click", handleSave);
+          coverSheetInput.removeEventListener("keydown", handleKeydown);
+        }
+      };
+
+      const handleKeydown = (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleSave();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          hideCoverSheet();
+          coverSheetSaveBtn.removeEventListener("click", handleSave);
+          coverSheetInput.removeEventListener("keydown", handleKeydown);
+        }
+      };
+
+      coverSheetSaveBtn.addEventListener("click", handleSave);
+      coverSheetInput.addEventListener("keydown", handleKeydown);
+      return;
+    }
+
+    // 2) 선택된 앨범이 없으면 → 기존처럼 현재 트랙 커버 변경
     if (!currentTrackId) {
-      alert("먼저 재생할 트랙을 선택해 주세요.");
+      alert("먼저 앨범을 선택하거나 재생할 트랙을 선택해 주세요.");
       return;
     }
     const track = tracks.find((t) => t.id === currentTrackId);
@@ -1852,6 +1917,7 @@ if (changeCoverBtn) {
     );
   });
 }
+
 
 // iOS 확대 방지
 document.addEventListener("gesturestart", function (e) {

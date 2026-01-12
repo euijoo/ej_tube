@@ -126,6 +126,34 @@ body {
   margin-top: 12px;
 }
 
+.main-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.title-edit-btn {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 14px;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.main-title-row:hover .title-edit-btn {
+  opacity: 1;
+  color: #9ca3af;
+}
+
+.title-edit-btn:active {
+  color: #e5e7eb;
+}
+
+
 .track-title-lg {
   font-size: 20px;
   margin: 0 0 4px;

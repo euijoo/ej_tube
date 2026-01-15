@@ -48,66 +48,67 @@
   </div>
 </header>
 
-  <main class="phone-shell">
-    <!-- cover-section ... -->
+    <main class="phone-shell">
+    <!-- ✅ 가운데 스크롤 영역 래퍼 추가 시작 -->
+    <div class="playlist-scroll-area">
 
-
-        <!-- 상단 커버 & 정보 -->
-        <section class="cover-section">
-          <div class="cover-wrapper">
-            <img id="thumbnail" class="cover-large" alt="cover" />
+      <!-- 상단 커버 & 정보 -->
+      <section class="cover-section">
+        <div class="cover-wrapper">
+          <img id="thumbnail" class="cover-large" alt="cover" />
+          <button
+            id="changeCoverBtn"
+            class="cover-change-btn"
+            title="커버 변경">
+            ⋯
+          </button>
+        </div>
+        <div class="cover-text">
+          <div class="main-title-row">
+            <h2 id="title" class="track-title-lg"></h2>
             <button
-              id="changeCoverBtn"
-              class="cover-change-btn"
-              title="커버 변경">
-              ⋯
+              id="titleEditBtn"
+              class="title-edit-btn"
+              type="button"
+              aria-label="Edit title"
+            >
+              ✎
             </button>
           </div>
-          <div class="cover-text">
-  <div class="main-title-row">
-    <h2 id="title" class="track-title-lg"></h2>
-    <button
-      id="titleEditBtn"
-      class="title-edit-btn"
-      type="button"
-      aria-label="Edit title"
-    >
-      ✎
-    </button>
-  </div>
-  <p id="artist" class="track-artist-lg"></p>
-</div>
+          <p id="artist" class="track-artist-lg"></p>
+        </div>
+      </section>
 
-        </section>
-
-        <!-- 플레이리스트 영역 -->
-        <section class="playlist-section">
-          <div class="playlist-header">
-            <div>
-              <h3 class="playlist-title">Playlist</h3>
-              <p class="playlist-sub">내가 추가한 YouTube / YouTube Music</p>
-            </div>
+      <!-- 플레이리스트 영역 -->
+      <section class="playlist-section">
+        <div class="playlist-header">
+          <div>
+            <h3 class="playlist-title">Playlist</h3>
+            <p class="playlist-sub">내가 추가한 YouTube / YouTube Music</p>
           </div>
-
-          <!-- URL 추가 -->
-          <div class="input-area big">
-            <input
-              type="text"
-              id="videoUrl"
-              placeholder="YouTube 또는 YouTube Music 주소를 붙여넣기" />
-            <button id="addButton" class="btn primary">추가</button>
-          </div>
-
-          <!-- 리스트 -->
-          <ul id="trackList" class="track-list"></ul>
-        </section>
-
-        <!-- YouTube iframe 플레이어 -->
-        <div class="player-container">
-          <div id="player" class="player-frame"></div>
         </div>
 
-      </main>
+        <!-- URL 추가 -->
+        <div class="input-area big">
+          <input
+            type="text"
+            id="videoUrl"
+            placeholder="YouTube 또는 YouTube Music 주소를 붙여넣기" />
+          <button id="addButton" class="btn primary">추가</button>
+        </div>
+
+        <!-- 리스트 -->
+        <ul id="trackList" class="track-list"></ul>
+      </section>
+
+      <!-- YouTube iframe 플레이어 -->
+      <div class="player-container">
+        <div id="player" class="player-frame"></div>
+      </div>
+
+    <!-- ✅ 가운데 스크롤 영역 래퍼 닫기 -->
+    </div>
+  </main>
 
       <!-- 기존 미니 플레이어 (숨김 처리) -->
       <footer class="mini-player" style="display: none;">

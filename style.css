@@ -116,7 +116,29 @@ app {
 .app-logo-text {
   font-size: 16px;
   font-weight: 600;
-  color: #f9fafb;
+  color: #f9fafb;          /* 텍스트는 거의 흰색 */
+  background: #111827;     /* ✅ 다크 캡슐 배경 */
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid #1f2937;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease,
+    box-shadow 0.15s ease;
+}
+
+.app-logo-text:hover {
+  background: #1f2937;     /* 살짝 더 밝은 다크톤 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  transform: translateY(-1px);
+}
+
+.app-logo-text:active {
+  transform: translateY(0);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
 }
 
 .top-bar-right {
